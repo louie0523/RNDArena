@@ -25,7 +25,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .ad-top-inner strong{color:var(--accent);}
 
 /* 사이드 광고 */
-.ad-side{position:fixed;top:50%;transform:translateY(-50%);width:160px;background:linear-gradient(180deg,#0f0f1e,#141428);border:1px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;}
+.ad-side{position:fixed;top:50%;transform:translateY(-50%);width:10px;background:linear-gradient(180deg,#0f0f1e,#141428);border:1px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;}
 .ad-side.left{left:6px;}.ad-side.right{right:6px;}
 .ad-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
 .ad-mock{width:110px;height:220px;background:rgba(255,255,255,0.02);border:1px dashed #2a2a2a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#333;text-align:center;}
@@ -129,9 +129,13 @@ textarea{resize:vertical;min-height:100px;}
 .modal-close:hover{color:var(--text);border-color:#666;}
 
 /* 하단 광고 */
-.ad-bottom{background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);border-top:1px solid var(--border);height:90px;display:flex;align-items:center;justify-content:center;position:relative;z-index:10;}
+.ad-bottom{background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);border-top:1px solid var(--border);border-bottom:1px solid var(--border);height:90px;display:flex;align-items:center;justify-content:center;position:relative;z-index:10;}
+/* 하단 사이드 광고 */
+.ad-bottom-sides{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 6px;position:relative;z-index:10;}
+.ad-bottom-side{background:linear-gradient(180deg,#0f0f1e,#141428);border:1px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;width:176px;}
+.ad-bottom-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
 
-@media(max-width:1400px){.ad-side{display:none;}header,.hero,footer{padding-left:24px;padding-right:24px;}.themes-grid{padding-left:24px;padding-right:24px;}}
+@media(max-width:1400px){.ad-side{display:none;}header,.hero,footer{padding-left:24px;padding-right:24px;}.themes-grid{padding-left:24px;padding-right:24px;}.ad-bottom-sides{display:none;}}
 @media(max-width:700px){.themes-grid{grid-template-columns:1fr;}.hero-title{font-size:36px;}}
 </style>
 </head>
@@ -149,20 +153,21 @@ textarea{resize:vertical;min-height:100px;}
     src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 
+<!-- 광고: 사이드 (고정) -->
 <div class="ad-side left">
   <div class="ad-side-label">advertisement</div>
   <ins class="kakao_ad_area" style="display:none;"
-    data-ad-unit = "DAN-hYb5KbEMjnaZkQfU"
-    data-ad-width = "160"
-    data-ad-height = "600"></ins>
+    data-ad-unit="DAN-hYb5KbEMjnaZkQfU"
+    data-ad-width="160"
+    data-ad-height="600"></ins>
   <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 <div class="ad-side right">
   <div class="ad-side-label">advertisement</div>
   <ins class="kakao_ad_area" style="display:none;"
-    data-ad-unit = "DAN-wMWKQ0WVYmrXN9op"
-    data-ad-width = "160"
-    data-ad-height = "600"></ins>
+    data-ad-unit="DAN-wMWKQ0WVYmrXN9op"
+    data-ad-width="160"
+    data-ad-height="600"></ins>
   <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 
@@ -265,9 +270,37 @@ textarea{resize:vertical;min-height:100px;}
   </div>
 </div>
 
+<!-- 광고: 하단 배너 (728x90) -->
+<div class="ad-bottom">
+  <div class="ad-top-label">advertisement</div>
+  <ins class="kakao_ad_area" style="display:none;"
+    data-ad-unit="여기에_하단배너_광고단위ID"
+    data-ad-width="728"
+    data-ad-height="90"></ins>
+  <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+</div>
 
+<!-- 광고: 하단 사이드 (160x600) -->
+<div class="ad-bottom-sides">
+  <div class="ad-bottom-side">
+    <div class="ad-bottom-side-label">advertisement</div>
+    <ins class="kakao_ad_area" style="display:none;"
+      data-ad-unit="여기에_하단좌측_광고단위ID"
+      data-ad-width="160"
+      data-ad-height="600"></ins>
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+  </div>
+  <div class="ad-bottom-side">
+    <div class="ad-bottom-side-label">advertisement</div>
+    <ins class="kakao_ad_area" style="display:none;"
+      data-ad-unit="여기에_하단우측_광고단위ID"
+      data-ad-width="160"
+      data-ad-height="600"></ins>
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+  </div>
+</div>
 
-<footer style="margin-top:60px;border-top:1px solid var(--border);padding:28px 160px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:10;">
+<footer style="border-top:1px solid var(--border);padding:28px 160px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:10;">
   <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">RANDOM ARENA</div>
   <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
     <a href="mailto:louie07230723@gmail.com" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;" onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'" onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">문의 : louie07230723@gmail.com</a>
@@ -289,7 +322,6 @@ textarea{resize:vertical;min-height:100px;}
 const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
 let inputMode='name', teams=[], fileNames=[];
 
-// 배경 파티클
 const bgCanvas=document.getElementById('bgCanvas');
 const bctx=bgCanvas.getContext('2d');
 bgCanvas.width=window.innerWidth; bgCanvas.height=window.innerHeight;
@@ -298,7 +330,6 @@ const stars=Array.from({length:80},()=>({x:Math.random()*window.innerWidth,y:Mat
 function drawBg(){bctx.clearRect(0,0,bgCanvas.width,bgCanvas.height);stars.forEach(s=>{s.y-=s.speed;if(s.y<0)s.y=bgCanvas.height;s.opacity+=.01;if(s.opacity>1)s.opacity=0;bctx.beginPath();bctx.arc(s.x,s.y,s.r,0,Math.PI*2);bctx.fillStyle=`rgba(200,200,255,${s.opacity*.4})`;bctx.fill();});requestAnimationFrame(drawBg);}
 drawBg();
 
-// 입력 모드
 function setIM(m,el){
   inputMode=m;
   ['name','num','file'].forEach(x=>document.getElementById(`im-${x}`).style.display=x===m?'block':'none');
@@ -306,7 +337,6 @@ function setIM(m,el){
   el.classList.add('active');
 }
 
-// 이름 파싱
 function parseNames(raw){return raw.split(/[\n,，、]+/).map(s=>s.trim()).filter(s=>s);}
 function previewNames(){
   const names=parseNames(document.getElementById('namesTA').value);
@@ -327,7 +357,6 @@ function togglePass(){
   document.getElementById('passDetail').style.display=document.getElementById('usePass').checked?'flex':'none';
 }
 
-// 참가자 수집
 function getParticipants(){
   if(inputMode==='name') return parseNames(document.getElementById('namesTA').value);
   if(inputMode==='num'){const n=parseInt(document.getElementById('totalNum').value)||0;return Array.from({length:n},(_,i)=>`${i+1}번`);}
@@ -335,13 +364,9 @@ function getParticipants(){
   return [];
 }
 function getConfig(){
-  return {
-    usePass:document.getElementById('usePass').checked,
-    passN:parseInt(document.getElementById('passN').value)||3
-  };
+  return {usePass:document.getElementById('usePass').checked,passN:parseInt(document.getElementById('passN').value)||3};
 }
 
-// 테마 이동
 function go(theme){
   const p=getParticipants();
   if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
@@ -350,7 +375,6 @@ function go(theme){
   window.open(`${theme}.html?${params.toString()}`, '_blank');
 }
 
-// 팀 나누기
 function initTeams(){teams=[{name:'A팀',color:COLORS[0],max:''},{name:'B팀',color:COLORS[1],max:''}];renderTeams();}
 function addTeam(){if(teams.length>=10)return;teams.push({name:`${String.fromCharCode(65+teams.length)}팀`,color:COLORS[teams.length%COLORS.length],max:''});renderTeams();}
 function delTeam(i){if(teams.length<=2)return;teams.splice(i,1);renderTeams();}
