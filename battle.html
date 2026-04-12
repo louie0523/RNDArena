@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔️ 배틀로얄 — RANDOM ARENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&family=Oswald:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0805;--surface:#140f08;--accent:#ff8c00;--accent2:#ff4444;--gold:#f5c518;--text:#f0e8d0;--muted:#8a7a60;--border:rgba(200,150,50,0.1);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(0,0,0,0.6);}
+.logo{font-family:'Oswald',sans-serif;font-size:18px;font-weight:900;color:var(--accent);}
+.back-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;}
+.game-wrap{display:flex;flex:1;overflow:hidden;}
+canvas#mapCanvas{flex:1;display:block;}
+.side{width:220px;background:rgba(20,15,8,.96);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.ps{padding:10px 12px;border-bottom:1px solid var(--border);}
+.pt{font-family:'Black Han Sans',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:6px;}
+.alive-list{display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1;padding:8px;}
+.alive-item{display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:11px;transition:all .3s;}
+.alive-item.dead{opacity:.3;filter:grayscale(1);}
+.hp-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;}
+.hp-bar{height:100%;border-radius:3px;transition:width .3s;}
+.evt-log{height:150px;overflow-y:auto;display:flex;flex-direction:column-reverse;padding:8px;}
+.log{font-size:11px;color:var(--muted);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.02);line-height:1.4;}
+.log.kill{color:#ff4444;}.log.loot{color:#ffd700;}.log.event{color:var(--accent);}.log.supply{color:#ff69b4;}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
+.ot{font-family:'Black Han Sans',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;}
+.os{font-size:13px;color:var(--muted);margin-bottom:26px;text-align:center;line-height:1.8;}
+.sbtn{background:linear-gradient(135deg,#ff8c00,#ff4444);color:#fff;border:none;padding:13px 40px;border-radius:50px;font-family:'Black Han Sans',sans-serif;font-size:19px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+.sbtn:hover{transform:scale(1.05);box-shadow:0 8px 24px rgba(255,140,0,.5);}
+.result-overlay{position:absolute;inset:0;background:rgba(0,0,0,.93);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:24px;overflow-y:auto;}
+.result-overlay.show{display:flex;}
+.ri2{display:flex;align-items:center;gap:12px;padding:9px 16px;margin-bottom:5px;background:rgba(255,255,255,.04);border-radius:9px;width:100%;max-width:420px;animation:sli .3s ease forwards;opacity:0;}
+@keyframes sli{from{transform:translateX(-20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.cbtn{margin-top:16px;background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);padding:9px 26px;border-radius:7px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;}
+.cbtn:hover{color:var(--text);}
+.game-container{position:relative;flex:1;display:flex;}
+input[type=range]{width:100%;accent-color:var(--accent);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">⚔️ 배틀로얄</div>
+  <div style="font-size:12px;color:var(--muted);" id="aliveDisplay">준비중...</div>
+  <button class="back-btn" onclick="history.back()">← 돌아가기</button>
+</header>
+<div class="game-wrap">
+  <div class="game-container">
+    <canvas id="mapCanvas"></canvas>
+    <div class="overlay" id="startOverlay">
+      <div class="ot">⚔️ 배틀로얄</div>
+      <div class="os" id="pInfo">참가자 0명<br>산악 지형에 낙하산으로 강하!<br>파밍 후 마지막 생존자가 1위!</div>
+      <button class="sbtn" onclick="startGame()">✈️ 강하!</button>
+    </div>
+    <div class="result-overlay" id="resultOverlay">
+      <div style="font-family:'Oswald',sans-serif;font-size:30px;font-weight:900;background:linear-gradient(135deg,#f5c518,#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:18px;">🏆 배틀로얄 결과!</div>
+      <div id="resultItems"></div>
+      <button class="cbtn" onclick="document.getElementById('resultOverlay').classList.remove('show')">✕ 닫기</button>
+    </div>
+  </div>
+  <div class="side">
+    <div class="ps"><div class="pt">⚡ 속도</div><input type="range" id="spd" min="1" max="5" value="3"></div>
+    <div class="ps"><div class="pt">👥 생존자</div></div>
+    <div class="alive-list" id="aliveList"></div>
+    <div class="ps" style="flex-shrink:0;">
+      <div class="pt">📢 전황</div>
+      <div class="evt-log" id="evtLog"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const AC = new (window.AudioContext||window.webkitAudioContext)();
+function sfx(freq,dur,type='square',vol=0.25){try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);o.start();o.stop(AC.currentTime+dur);}catch(e){}}
+function playSFX(type){
+  if(type==='gunshot'){sfx(800,.05,'square',.3);setTimeout(()=>sfx(200,.1,'sawtooth',.2),40);}
+  else if(type==='kill'){sfx(300,.08,'square',.4);setTimeout(()=>sfx(150,.2,'sawtooth',.3),70);}
+  else if(type==='loot'){sfx(600,.05,'sine',.2);setTimeout(()=>sfx(800,.1,'sine',.2),60);}
+  else if(type==='supply'){[440,550,660,880].forEach((f,i)=>setTimeout(()=>sfx(f,.15,'triangle',.35),i*60));}
+  else if(type==='event'){sfx(350,.1,'sine',.2);}
+}
+
+const params = new URLSearchParams(location.search);
+const names = params.get('names')?params.get('names').split(',').filter(Boolean):['철수','영희','민준','지수','태양','현우'];
+const usePass=params.get('usePass')==='true', passN=parseInt(params.get('passN'))||3;
+document.getElementById('pInfo').innerHTML=`참가자 ${names.length}명<br>산악 지형에 낙하산으로 강하!<br>파밍 후 마지막 생존자가 1위!`;
+
+const canvas=document.getElementById('mapCanvas');
+const ctx=canvas.getContext('2d');
+let W,H;
+function resize(){const c=canvas.parentElement;W=canvas.width=c.clientWidth;H=canvas.height=c.clientHeight;}
+resize();window.addEventListener('resize',resize);
+
+const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
+// 총기 정의
+const GUNS={
+  pistol:{name:'권총',range:100,dmg:25,moveSpd:1.2,miss:0.2,emoji:'🔫'},
+  rifle:{name:'소총',range:180,dmg:40,moveSpd:1.0,miss:0.1,emoji:'🪖'},
+  sniper:{name:'저격총',range:320,dmg:80,moveSpd:0.5,miss:0.3,emoji:'🎯'},
+};
+// 근접무기
+const MELEE={
+  frying:{name:'후라이팬',dmg:50,emoji:'🍳'},
+  bbatta:{name:'빠따',dmg:60,emoji:'🪣'},
+  sashimi:{name:'제주 할매 사시미',dmg:75,emoji:'🔪'},
+};
+// 갑옷
+const ARMORS={
+  light:{name:'경갑옷',def:15,emoji:'🧥'},
+  heavy:{name:'중갑옷',def:30,emoji:'🛡️'},
+};
+// 회복템
+const HEALS={
+  bandage:{name:'붕대',hp:25,emoji:'🩹'},
+  medkit:{name:'의약품',hp:60,emoji:'💊'},
+};
+
+// 지형
+let terrain=[], mountains=[], items=[], bullets=[], particles=[], rankings=[];
+let players=[], gameRunning=false, gameFinished=false, frameId=null;
+let supplyTimer=0, supplyInterval=400;
+let randomEventTimer=0, randomEventInterval=300;
+let gameTime=0;
+
+// ── 지형 생성 ──
+function buildTerrain(){
+  // 산
+  mountains=[];
+  const mCount=8+Math.floor(names.length/3);
+  for(let i=0;i<mCount;i++){
+    mountains.push({
+      x:80+Math.random()*(W-160),y:80+Math.random()*(H-160),
+      w:60+Math.random()*100,h:40+Math.random()*80,
+      color:`hsl(${80+Math.random()*40},${30+Math.random()*30}%,${20+Math.random()*15}%)`
+    });
+  }
+  // 나무
+  terrain=[];
+  for(let i=0;i<60;i++){
+    terrain.push({x:Math.random()*W,y:Math.random()*H,type:'tree',r:8+Math.random()*8});
+  }
+  // 바위
+  for(let i=0;i<30;i++){
+    terrain.push({x:Math.random()*W,y:Math.random()*H,type:'rock',r:10+Math.random()*14});
+  }
+}
+
+// ── 아이템 스폰 ──
+function spawnItems(count=15){
+  for(let i=0;i<count;i++){
+    const roll=Math.random();
+    let type;
+    if(roll<0.35) type='gun';
+    else if(roll<0.55) type='armor';
+    else type='heal';
+
+    let data;
+    if(type==='gun'){const keys=Object.keys(GUNS);data={...GUNS[keys[Math.floor(Math.random()*keys.length)]],key:keys[Math.floor(Math.random()*keys.length)]};}
+    else if(type==='armor'){const keys=Object.keys(ARMORS);const k=keys[Math.floor(Math.random()*keys.length)];data={...ARMORS[k],key:k};}
+    else{const keys=Object.keys(HEALS);const k=keys[Math.floor(Math.random()*keys.length)];data={...HEALS[k],key:k};}
+
+    items.push({x:30+Math.random()*(W-60),y:30+Math.random()*(H-60),type,data,visible:true,glow:0});
+  }
+}
+
+// ── 보급품 강하 ──
+function dropSupply(){
+  const roll=Math.random();
+  let data;
+  if(roll<0.5){const keys=Object.keys(GUNS);const k=keys[Math.floor(Math.random()*keys.length)];data={...GUNS[k],key:k};data.type='gun';}
+  else{const keys=Object.keys(MELEE);const k=keys[Math.floor(Math.random()*keys.length)];data={...MELEE[k],key:k};data.type='melee';}
+  const sx=80+Math.random()*(W-160), sy=80+Math.random()*(H-160);
+  addLog(`📦 보급품 강하! ${sx.toFixed(0)},${sy.toFixed(0)} 지점에 ${data.name||data.key}!`,'supply');
+  playSFX('supply');
+  items.push({x:sx,y:sy,type:data.type,data,visible:true,glow:20,isSupply:true});
+  // 파티클
+  for(let i=0;i<12;i++)spawnParticle(sx,sy,'#ff69b4',3+Math.random()*5);
+}
+
+// ── 플레이어 생성 ──
+function createPlayers(){
+  players=names.map((name,i)=>({
+    name,i,
+    x:80+Math.random()*(W-160),y:80+Math.random()*(H-160),
+    hp:100, maxHp:100,
+    color:COLORS[i%COLORS.length],
+    gun:null,melee:null,armor:null,heals:[],
+    state:'parachute', // parachute→alive→dead
+    parachuteY:-40+(i*30),
+    targetX:80+Math.random()*(W-160), targetY:80+Math.random()*(H-160),
+    moveTimer:0, movePeriod:60+Math.random()*120,
+    combatTimer:0,
+    healTimer:0,
+    rank:0, alive:true,
+    vx:0,vy:0,
+  }));
+  rankings=[];
+}
+
+// ── 이동 ──
+function movePlayer(p){
+  if(!p.alive||p.state!=='alive') return;
+  p.moveTimer++;
+  if(p.moveTimer>p.movePeriod){
+    p.moveTimer=0; p.movePeriod=50+Math.random()*120;
+    // 가장 가까운 아이템이나 적을 향해 이동
+    const nearItem=items.filter(it=>it.visible).sort((a,b)=>dist(p,a)-dist(p,b))[0];
+    const enemies=players.filter(e=>e.alive&&e!==p);
+    const nearEnemy=enemies.sort((a,b)=>dist(p,a)-dist(p,b))[0];
+    let tx=p.targetX, ty=p.targetY;
+    if(nearItem&&dist(p,nearItem)<150) {tx=nearItem.x;ty=nearItem.y;}
+    else if(nearEnemy&&canFight(p,nearEnemy)) {tx=nearEnemy.x;ty=nearEnemy.y;}
+    else {tx=40+Math.random()*(W-80);ty=40+Math.random()*(H-80);}
+    p.targetX=tx; p.targetY=ty;
+  }
+  const moveSpd=(p.gun?p.gun.moveSpd:1.0)*1.2;
+  const dx=p.targetX-p.x, dy=p.targetY-p.y;
+  const d=Math.sqrt(dx*dx+dy*dy);
+  if(d>5){p.x+=dx/d*moveSpd;p.y+=dy/d*moveSpd;}
+  p.x=Math.max(15,Math.min(W-15,p.x));
+  p.y=Math.max(15,Math.min(H-15,p.y));
+}
+
+// ── 파밍 ──
+function tryLoot(p){
+  if(!p.alive||p.state!=='alive') return;
+  const near=items.filter(it=>it.visible&&dist(p,it)<30);
+  near.forEach(item=>{
+    item.visible=false;
+    if(item.type==='gun'){
+      if(!p.gun||(item.data.dmg>p.gun.dmg)){p.gun=item.data;addLog(`🔫 ${p.name}이(가) ${item.data.name}을 획득!`,'loot');playSFX('loot');}
+    } else if(item.type==='melee'){
+      p.melee=item.data; addLog(`⚔️ ${p.name}이(가) ${item.data.name}을 획득!`,'loot');playSFX('loot');
+    } else if(item.type==='armor'){
+      if(!p.armor||(item.data.def>p.armor.def)){p.armor=item.data;addLog(`🛡️ ${p.name}이(가) ${item.data.name}을 획득!`,'loot');playSFX('loot');}
+    } else if(item.type==='heal'){
+      p.heals.push(item.data); addLog(`💊 ${p.name}이(가) ${item.data.name}을 획득!`,'loot');playSFX('loot');
+    }
+  });
+}
+
+// ── 전투 ──
+function canFight(a,b){
+  if(!a.alive||!b.alive) return false;
+  const range=a.gun?a.gun.range:(a.melee?50:40);
+  return dist(a,b)<range;
+}
+function fight(a,b){
+  if(!a.alive||!b.alive||a.combatTimer>0) return;
+  // 명중 여부
+  const missChance=a.gun?a.gun.miss:0;
+  if(Math.random()<missChance){
+    addLog(`💨 ${a.name}의 공격이 ${b.name}에게 빗나갔습니다!`,'');
+    playSFX('gunshot');
+    a.combatTimer=60;
+    return;
+  }
+  let dmg=a.gun?a.gun.dmg:(a.melee?a.melee.dmg:15);
+  if(b.armor) dmg=Math.max(5, dmg-b.armor.def);
+  b.hp-=dmg;
+  playSFX('gunshot');
+  const weapon=a.gun?a.gun.name:(a.melee?a.melee.name:'맨손');
+  addLog(`💥 ${a.name}이 ${weapon}로 ${b.name} 공격! (-${dmg}hp)`,dmg>=60?'kill':'');
+  // 총알 파티클
+  spawnBullet(a.x,a.y,b.x,b.y,a.color);
+  a.combatTimer=80;
+  if(b.hp<=0){
+    killPlayer(b, a.name);
+    // 아이템 드랍
+    if(b.gun)items.push({x:b.x+Math.random()*20-10,y:b.y+Math.random()*20-10,type:'gun',data:b.gun,visible:true,glow:10});
+    if(b.armor)items.push({x:b.x+Math.random()*20-10,y:b.y+Math.random()*20-10,type:'armor',data:b.armor,visible:true,glow:10});
+    b.heals.forEach(h=>items.push({x:b.x+Math.random()*20-10,y:b.y+Math.random()*20-10,type:'heal',data:h,visible:true,glow:10}));
+  }
+}
+function killPlayer(p, killer){
+  p.alive=false; p.state='dead'; p.hp=0;
+  rankings.unshift(p.name); // 나중 죽은 순이 높은 등수
+  p.rank=players.length-rankings.length+1;
+  addLog(`💀 ${p.name}이(가) ${killer}에게 처치당했습니다!`,'kill');
+  playSFX('kill');
+  spawnParticle(p.x,p.y,'#ff4444',8);
+  updatePanel();
+}
+
+// ── 회복 ──
+function tryHeal(p){
+  if(!p.alive||p.hp>=p.maxHp*0.9||p.heals.length===0) return;
+  p.healTimer++;
+  if(p.healTimer<120) return;
+  p.healTimer=0;
+  const heal=p.heals.shift();
+  p.hp=Math.min(p.maxHp, p.hp+heal.hp);
+  addLog(`💊 ${p.name}이(가) ${heal.name} 사용! (+${heal.hp}hp)`,'event');
+}
+
+// ── 랜덤 이벤트 ──
+let lastRandEvt=0;
+function tryRandomEvent(){
+  const now=Date.now();
+  if(now-lastRandEvt<5000) return;
+  const alive=players.filter(p=>p.alive);
+  if(!alive.length) return;
+  if(Math.random()>0.02) return;
+  lastRandEvt=now;
+  const p=alive[Math.floor(Math.random()*alive.length)];
+  const roll=Math.random();
+  if(roll<0.3){p.hp=Math.max(1,p.hp-20);addLog(`🤸 ${p.name}이(가) 걷다가 넘어졌습니다! (-20hp)`,'event');playSFX('event');}
+  else if(roll<0.6){p.hp=Math.min(p.maxHp,p.hp+15);addLog(`🌊 ${p.name}이(가) 샘물을 발견! (+15hp)`,'event');playSFX('event');}
+  else{addLog(`🔥 ${p.name}이(가) 낙뢰를 맞았다! (-30hp)`,'event');p.hp=Math.max(1,p.hp-30);playSFX('kill');}
+}
+
+// ── 파티클 / 총알 ──
+function spawnParticle(x,y,color,count){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,s=1+Math.random()*3;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,color,r:2+Math.random()*3,life:1,decay:.03+Math.random()*.03});
+  }
+}
+function spawnBullet(x1,y1,x2,y2,color){bullets.push({x:x1,y:y1,tx:x2,ty:y2,color,life:1});}
+function updateBullets(){bullets=bullets.filter(b=>{b.life-=0.1;b.x+=(b.tx-b.x)*0.3;b.y+=(b.ty-b.y)*0.3;return b.life>0;});}
+function updateParticles(){particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;return p.life>0;});}
+
+// ── 드로우 ──
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // 하늘
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#1a2a3a'); sky.addColorStop(0.5,'#2a3d1a'); sky.addColorStop(1,'#0a1a08');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+
+  // 산
+  mountains.forEach(m=>{
+    ctx.beginPath();
+    ctx.moveTo(m.x-m.w/2,m.y+m.h/2);
+    ctx.lineTo(m.x,m.y-m.h/2);
+    ctx.lineTo(m.x+m.w/2,m.y+m.h/2);
+    ctx.closePath();
+    ctx.fillStyle=m.color; ctx.fill();
+    // 눈
+    ctx.beginPath();
+    ctx.moveTo(m.x-m.w*0.15,m.y-m.h*0.3);
+    ctx.lineTo(m.x,m.y-m.h/2);
+    ctx.lineTo(m.x+m.w*0.15,m.y-m.h*0.3);
+    ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fill();
+  });
+
+  // 지형
+  terrain.forEach(t=>{
+    if(t.type==='tree'){
+      ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(30,${80+Math.random()*20},20,0.9)`; ctx.fill();
+      ctx.fillStyle='rgba(20,50,10,0.6)'; ctx.beginPath(); ctx.arc(t.x+2,t.y+2,t.r,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2); ctx.fillStyle=`rgba(40,100,25,0.9)`; ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.ellipse(t.x,t.y,t.r,t.r*0.6,0,0,Math.PI*2);
+      ctx.fillStyle='rgba(80,70,60,0.8)'; ctx.fill();
+    }
+  });
+
+  // 아이템
+  items.filter(it=>it.visible).forEach(it=>{
+    if(it.glow>0){ctx.shadowColor=it.isSupply?'#ff69b4':'#ffd700';ctx.shadowBlur=it.glow;}
+    ctx.font='18px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(it.data.emoji,it.x,it.y);
+    ctx.shadowBlur=0;
+    if(it.glow>0)it.glow=Math.max(0,it.glow-.3);
+  });
+
+  // 총알
+  bullets.forEach(b=>{
+    ctx.beginPath(); ctx.arc(b.x,b.y,3*b.life,0,Math.PI*2);
+    ctx.fillStyle=b.color+'cc'; ctx.fill();
+  });
+
+  // 파티클
+  particles.forEach(p=>{
+    ctx.globalAlpha=p.life;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+    ctx.fillStyle=p.color; ctx.fill();
+  }); ctx.globalAlpha=1;
+
+  // 플레이어
+  players.forEach(p=>{
+    if(p.state==='parachute'){
+      // 낙하산 강하 애니메이션
+      ctx.font='20px serif'; ctx.textAlign='center';
+      ctx.fillText('🪂',p.x,p.parachuteY);
+      ctx.fillStyle=p.color; ctx.font='10px "Noto Sans KR"';
+      ctx.fillText(p.name,p.x,p.parachuteY+16);
+      return;
+    }
+    if(!p.alive){
+      ctx.globalAlpha=0.3;
+      ctx.font='16px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('💀',p.x,p.y);
+      ctx.globalAlpha=1; return;
+    }
+    // HP 바
+    const bw=32;
+    ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(p.x-bw/2,p.y-22,bw,6);
+    const hpPct=p.hp/p.maxHp;
+    ctx.fillStyle=hpPct>0.6?'#4caf50':hpPct>0.3?'#ff9800':'#f44336';
+    ctx.fillRect(p.x-bw/2,p.y-22,bw*hpPct,6);
+
+    // 이름
+    ctx.fillStyle='rgba(0,0,0,0.7)'; const nw=p.name.length*7+10;
+    ctx.fillRect(p.x-nw/2,p.y-32,nw,14);
+    ctx.fillStyle=p.color; ctx.font='bold 10px "Noto Sans KR"';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(p.name.length>5?p.name.slice(0,4)+'…':p.name,p.x,p.y-31);
+
+    // 캐릭터 (사람 모양)
+    ctx.beginPath();
+    ctx.arc(p.x,p.y-6,7,0,Math.PI*2); // 머리
+    ctx.fillStyle=p.color; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y+1); ctx.lineTo(p.x-6,p.y+16); ctx.lineTo(p.x+6,p.y+16); // 몸
+    ctx.moveTo(p.x-4,p.y+8); ctx.lineTo(p.x+4,p.y+8); // 팔
+    ctx.strokeStyle=p.color; ctx.lineWidth=2; ctx.stroke();
+
+    // 무기 이코
+    if(p.gun||p.melee){
+      ctx.font='12px serif';
+      ctx.fillText(p.gun?p.gun.emoji:p.melee.emoji, p.x+10, p.y-2);
+    }
+    if(p.armor){
+      ctx.font='10px serif';
+      ctx.fillText(p.armor.emoji, p.x-10, p.y-2);
+    }
+  });
+}
+
+function updatePanel(){
+  const sorted=[...players].sort((a,b)=>{
+    if(a.alive!==b.alive) return a.alive?-1:1;
+    return b.hp-a.hp;
+  });
+  document.getElementById('aliveList').innerHTML=sorted.map(p=>`
+    <div class="alive-item ${!p.alive?'dead':''}">
+      <div style="color:${p.color};font-size:10px;min-width:20px;">${p.alive?'🟢':'💀'}</div>
+      <div style="flex:1;font-size:11px;">${p.name.length>6?p.name.slice(0,5)+'…':p.name}</div>
+      <div class="hp-bar-wrap"><div class="hp-bar" style="width:${p.hp/p.maxHp*100}%;background:${p.hp>60?'#4caf50':p.hp>30?'#ff9800':'#f44336'}"></div></div>
+      <div style="font-size:10px;color:var(--muted);min-width:24px;text-align:right">${p.alive?p.hp:0}</div>
+    </div>`).join('');
+  const aliveCount=players.filter(p=>p.alive).length;
+  document.getElementById('aliveDisplay').textContent=`생존: ${aliveCount}/${players.length}`;
+}
+
+function addLog(msg,type=''){
+  const log=document.getElementById('evtLog');
+  const el=document.createElement('div');
+  el.className='log'+(type?' '+type:'');
+  el.textContent=msg;
+  log.prepend(el);
+  if(log.children.length>60)log.removeChild(log.lastChild);
+}
+
+function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);}
+
+let parachuteTimer=0;
+function update(){
+  const speed=parseInt(document.getElementById('spd').value);
+  gameTime++;
+  parachuteTimer++;
+
+  // 낙하산 강하
+  players.forEach(p=>{
+    if(p.state==='parachute'){
+      p.parachuteY+=2*speed;
+      if(p.parachuteY>=p.y){p.state='alive';addLog(`⬇️ ${p.name} 강하!`,'event');}
+    }
+  });
+
+  if(parachuteTimer<80/speed) {draw();frameId=requestAnimationFrame(update);return;}
+
+  // 보급품
+  supplyTimer++;
+  if(supplyTimer>=supplyInterval){supplyTimer=0;supplyInterval=Math.max(200,supplyInterval-20);dropSupply();}
+
+  // 랜덤 이벤트
+  tryRandomEvent();
+
+  // 플레이어 행동
+  players.forEach(p=>{
+    if(!p.alive||p.state!=='alive') return;
+    if(p.combatTimer>0) p.combatTimer-=speed;
+    movePlayer(p);
+    tryLoot(p);
+    tryHeal(p);
+    // 전투
+    const enemies=players.filter(e=>e.alive&&e!==p&&canFight(p,e));
+    if(enemies.length>0){
+      fight(p,enemies[0]);
+    }
+  });
+
+  updateBullets();
+  updateParticles();
+
+  updatePanel();
+  draw();
+
+  // 종료 체크
+  const alive=players.filter(p=>p.alive);
+  if(alive.length<=1&&!gameFinished){
+    gameFinished=true;
+    if(alive.length===1){alive[0].rank=1;rankings=[alive[0].name,...rankings];}
+    setTimeout(showResult,800);
+    return;
+  }
+  frameId=requestAnimationFrame(update);
+}
+
+function showResult(){
+  const finalOrder=rankings.slice().reverse(); // 마지막 생존 = 1위
+  const items2=document.getElementById('resultItems');
+  items2.innerHTML=finalOrder.map((name,i)=>{
+    const rank=i+1;
+    const sym=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`${rank}위`;
+    const color=COLORS[names.indexOf(name)%COLORS.length];
+    const isPass=usePass&&rank<=passN;
+    return `<div class="ri2" style="animation-delay:${i*0.06}s;border-left:4px solid ${color}">
+      <div style="font-family:'Oswald',sans-serif;font-size:18px;min-width:32px;color:${color}">${sym}</div>
+      <div style="flex:1;font-family:'Black Han Sans',sans-serif;font-size:15px">${name}</div>
+      ${usePass?`<div style="font-size:11px;padding:2px 8px;border-radius:10px;background:${isPass?'rgba(0,230,118,.2)':'rgba(255,77,77,.2)'};color:${isPass?'#00e676':'#ff4d4d'}">${isPass?'✅합격':'❌탈락'}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function startGame(){
+  AC.resume();
+  document.getElementById('startOverlay').style.display='none';
+  buildTerrain();
+  spawnItems(20);
+  createPlayers();
+  updatePanel();
+  addLog('✈️ 전원 낙하산 강하 시작!','event');
+  gameRunning=true;
+  frameId=requestAnimationFrame(update);
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+</script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏇 경마 — RANDOM ARENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&family=Oswald:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050e03;--surface:#0a1a06;--surface2:#122008;--accent:#7fff00;--gold:#f5c518;--text:#e8f5e0;--muted:#6a8a60;--border:rgba(100,200,50,0.1);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(0,0,0,0.5);}
+.logo{font-family:'Oswald',sans-serif;font-size:20px;font-weight:900;color:var(--accent);}
+.back-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Noto Sans KR',sans-serif;}
+.back-btn:hover{color:var(--text);}
+
+.game-wrap{display:flex;flex:1;overflow:hidden;}
+canvas#raceCanvas{flex:1;display:block;}
+
+/* 우측 패널 */
+.side{width:230px;background:rgba(10,26,6,0.95);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.ps{padding:12px;border-bottom:1px solid var(--border);}
+.pt{font-family:'Black Han Sans',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:8px;}
+.rank-list{display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1;padding:8px;}
+.ri{display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:12px;transition:all .3s;}
+.ri.done{background:rgba(127,255,0,0.08);border-left:3px solid var(--accent);}
+.ri-rank{font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;min-width:26px;}
+.ri-name{flex:1;font-size:11px;}
+.event-log{height:130px;overflow-y:auto;display:flex;flex-direction:column-reverse;}
+.log{font-size:11px;color:var(--muted);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.02);}
+.log.evt{color:#ffcc00;}.log.skill{color:#ff6aff;}.log.arrive{color:var(--accent);}
+input[type=range]{width:100%;accent-color:var(--accent);}
+
+/* 오버레이 */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
+.ot{font-family:'Black Han Sans',sans-serif;font-size:30px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;}
+.os{font-size:14px;color:var(--muted);margin-bottom:28px;text-align:center;line-height:1.7;}
+.sbtn{background:linear-gradient(135deg,#7fff00,#32cd32);color:#000;border:none;padding:14px 44px;border-radius:50px;font-family:'Black Han Sans',sans-serif;font-size:20px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+.sbtn:hover{transform:scale(1.05);box-shadow:0 8px 24px rgba(127,255,0,.5);}
+.result-overlay{position:absolute;inset:0;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:24px;overflow-y:auto;}
+.result-overlay.show{display:flex;}
+.rtitle{font-family:'Oswald',sans-serif;font-size:32px;font-weight:900;background:linear-gradient(135deg,#f5c518,#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px;}
+.res-item{display:flex;align-items:center;gap:12px;padding:10px 16px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:10px;width:100%;max-width:420px;animation:sli .3s ease forwards;opacity:0;}
+@keyframes sli{from{transform:translateX(-20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.cbtn{margin-top:16px;background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);padding:10px 28px;border-radius:8px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.cbtn:hover{color:var(--text);}
+
+.game-container{position:relative;flex:1;display:flex;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🏇 경마 레이스</div>
+  <div style="font-size:12px;color:var(--muted);" id="lapDisplay">준비중...</div>
+  <button class="back-btn" onclick="history.back()">← 돌아가기</button>
+</header>
+<div class="game-wrap">
+  <div class="game-container">
+    <canvas id="raceCanvas"></canvas>
+    <div class="overlay" id="startOverlay">
+      <div class="ot">🏇 경마 레이스</div>
+      <div class="os" id="pInfo">참가자 0명<br>트랙을 돌며 가장 먼저 결승선을 통과하는 순으로 순위 결정!</div>
+      <button class="sbtn" onclick="startGame()">🚩 출발!</button>
+    </div>
+    <div class="result-overlay" id="resultOverlay">
+      <div class="rtitle">🏆 경마 결과!</div>
+      <div id="resultItems"></div>
+      <button class="cbtn" onclick="document.getElementById('resultOverlay').classList.remove('show')">✕ 닫기</button>
+    </div>
+  </div>
+  <div class="side">
+    <div class="ps">
+      <div class="pt">⚡ 속도</div>
+      <input type="range" id="spd" min="1" max="5" value="3">
+    </div>
+    <div class="ps"><div class="pt">🏆 순위</div></div>
+    <div class="rank-list" id="rankList"></div>
+    <div class="ps" style="flex-shrink:0;">
+      <div class="pt">📢 이벤트</div>
+      <div class="event-log" id="evtLog"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 오디오 (Web Audio API) ──
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+function beep(freq, dur, type='sine', vol=0.3) {
+  try {
+    const osc=AC.createOscillator(), gain=AC.createGain();
+    osc.connect(gain); gain.connect(AC.destination);
+    osc.type=type; osc.frequency.value=freq;
+    gain.gain.setValueAtTime(vol, AC.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
+    osc.start(); osc.stop(AC.currentTime+dur);
+  } catch(e){}
+}
+function playStart(){beep(440,.1,'square',.4);setTimeout(()=>beep(550,.1,'square',.4),120);setTimeout(()=>beep(660,.3,'square',.5),240);}
+function playFinish(){[880,1100,1320,1760].forEach((f,i)=>setTimeout(()=>beep(f,.2,'triangle',.5),i*80));}
+function playSkill(){beep(200,.05,'sawtooth',.3);setTimeout(()=>beep(400,.05,'sawtooth',.3),50);setTimeout(()=>beep(800,.3,'sawtooth',.4),100);}
+function playEvent(){beep(300,.15,'square',.25);}
+function playKick(){beep(150,.1,'sawtooth',.35);setTimeout(()=>beep(100,.15,'sawtooth',.2),80);}
+
+// ── URL 파라미터 ──
+const params = new URLSearchParams(location.search);
+const names = params.get('names') ? params.get('names').split(',').filter(Boolean) : ['철수','영희','민준','지수','태양'];
+const usePass = params.get('usePass')==='true';
+const passN = parseInt(params.get('passN'))||3;
+
+document.getElementById('pInfo').innerHTML = `참가자 ${names.length}명<br>트랙을 돌며 먼저 결승선 통과 순으로 순위 결정!`;
+
+// ── 캔버스 ──
+const canvas = document.getElementById('raceCanvas');
+const ctx = canvas.getContext('2d');
+let W, H, CX, CY, RX, RY;
+function resize() {
+  const c = canvas.parentElement;
+  W = canvas.width = c.clientWidth;
+  H = canvas.height = c.clientHeight;
+  CX = W/2; CY = H/2;
+  RX = W*0.38; RY = H*0.38;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const COLORS = ['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
+const HORSE_EMOJIS = ['🏇','🐴','🦄','🐎','🏇','🐴','🦄','🐎','🏇','🐴','🦄','🐎'];
+const TOTAL_LAPS = 3; // 3바퀴 후 결승
+
+let horses = [], arrived = [], gameRunning = false, gameFinished = false;
+let frameId = null;
+let lastEventTime = 0;
+let dropShadows = [];
+
+// ── 말 생성 ──
+function createHorses() {
+  horses = names.map((name, i) => {
+    const offset = (i / names.length) * Math.PI * 2;
+    return {
+      name, i,
+      angle: -Math.PI/2 + offset * 0.05, // 거의 같은 출발점
+      lap: 0,
+      progress: 0, // 0~1 트랙 진행도 (전체)
+      baseSpeed: 0.008 + Math.random() * 0.004,
+      speed: 0,
+      speedMult: 1,
+      speedChangeTimer: 0,
+      speedChangePeriod: 80 + Math.random() * 120,
+      color: COLORS[i % COLORS.length],
+      emoji: HORSE_EMOJIS[i % HORSE_EMOJIS.length],
+      skillReady: false,
+      skillActive: false,
+      skillTimer: 0,
+      arrived: false,
+      rank: 0,
+      // 이벤트 상태
+      eventState: 'normal', // 'toilet','kick','sleep'
+      eventTimer: 0,
+      sleepBoostPending: false,
+      // 시각 효과
+      trailPoints: [],
+      shake: 0,
+    };
+  });
+
+  // 필살기 배정
+  const skillCount = 1 + Math.floor(names.length / 10);
+  shuffle(horses.map((_,i)=>i)).slice(0, skillCount).forEach(i => { horses[i].skillReady = true; });
+}
+
+// ── 트랙 위 좌표 ──
+function trackPos(angle, offset=0) {
+  return {
+    x: CX + (RX + offset) * Math.cos(angle),
+    y: CY + (RY + offset) * Math.sin(angle)
+  };
+}
+
+// ── 이벤트 로그 ──
+function addLog(msg, type='') {
+  const log = document.getElementById('evtLog');
+  const el = document.createElement('div');
+  el.className = 'log' + (type?' '+type:'');
+  el.textContent = msg;
+  log.prepend(el);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+// ── 순위 패널 ──
+function updateRankPanel() {
+  // 진행도 기준 정렬
+  const sorted = [...horses].sort((a,b) => {
+    if (a.arrived !== b.arrived) return a.arrived ? -1 : 1;
+    return (b.lap + b.progress) - (a.lap + a.progress);
+  });
+  document.getElementById('rankList').innerHTML = sorted.map((h,i) => {
+    const rank = h.arrived ? h.rank : null;
+    const sym = rank ? (rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`${rank}위`) : `${i+1}위권`;
+    return `<div class="ri ${h.arrived?'done':''}">
+      <div class="ri-rank" style="color:${h.color}">${sym}</div>
+      <div class="ri-name">${h.name} ${h.eventState==='toilet'?'🚽':h.eventState==='sleep'?'😴':h.skillActive?'⚡':''}</div>
+      <div style="font-size:10px;color:var(--muted);">${h.arrived?'완주':`${Math.floor((h.lap/TOTAL_LAPS)*100)}%`}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('lapDisplay').textContent = `🏁 ${arrived.length}/${horses.length}마리 완주`;
+}
+
+// ── 랜덤 이벤트 ──
+let lastEventIdx = -1;
+function tryEvent() {
+  const now = Date.now();
+  if (now - lastEventTime < 3000) return;
+  const active = horses.filter(h => !h.arrived && h.eventState === 'normal');
+  if (active.length < 2) return;
+  if (Math.random() > 0.018) return;
+  lastEventTime = now;
+
+  const target = active[Math.floor(Math.random() * active.length)];
+  const roll = Math.random();
+
+  if (roll < 0.33) {
+    // 화장실
+    target.eventState = 'toilet';
+    target.eventTimer = 180;
+    addLog(`🚽 ${target.name}의 말이 갑자기 화장실로 가버렸습니다!`, 'evt');
+    playEvent();
+  } else if (roll < 0.66) {
+    // 뒷발차기
+    target.eventState = 'kick';
+    target.eventTimer = 60;
+    addLog(`🦵 ${target.name}의 말이 옆의 말을 뒷발차기!`, 'evt');
+    playKick();
+    // 가장 가까운 말 밀기
+    const near = active.filter(h=>h!==target).sort((a,b)=>Math.abs(a.angle-target.angle)-Math.abs(b.angle-target.angle))[0];
+    if (near) {
+      near.angle -= 0.15;
+      near.progress -= 0.015;
+      near.shake = 20;
+      addLog(`  ↳ ${near.name}의 말이 뒤로 밀렸습니다!`, 'evt');
+    }
+  } else {
+    // 낮잠
+    target.eventState = 'sleep';
+    target.eventTimer = 150;
+    target.sleepBoostPending = true;
+    addLog(`😴 ${target.name}의 말이 낮잠으로 기력을 회복합니다...`, 'evt');
+    playEvent();
+  }
+}
+
+// ── 필살기 ──
+let lastSkillTime = 0;
+function trySkill() {
+  const now = Date.now();
+  if (now - lastSkillTime < 4000) return;
+  const candidates = horses.filter(h => !h.arrived && h.skillReady && !h.skillActive && h.eventState==='normal');
+  if (!candidates.length) return;
+  if (Math.random() > 0.003) return;
+  const h = candidates[Math.floor(Math.random() * candidates.length)];
+  h.skillActive = true;
+  h.skillTimer = 240;
+  lastSkillTime = now;
+  addLog(`💥 ${h.name} 필살기 발동! 폭발적 가속!`, 'skill');
+  playSkill();
+}
+
+// ── 드로우 ──
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // 배경 (잔디)
+  const bgGrad = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(W,H));
+  bgGrad.addColorStop(0,'#0a1a06'); bgGrad.addColorStop(1,'#050e03');
+  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+
+  // 잔디 줄무늬
+  for (let y=0; y<H; y+=30) {
+    ctx.fillStyle = y%60===0 ? 'rgba(30,60,10,0.3)' : 'rgba(20,45,5,0.2)';
+    ctx.fillRect(0, y, W, 30);
+  }
+
+  // 트랙 외곽 (흰 선)
+  drawTrackOval(RX+36, RY+36, 'rgba(255,255,255,0.15)', 10);
+  // 트랙 내부 (녹색)
+  drawTrackOval(RX-36, RY-36, 'rgba(50,120,20,0.6)', 0, true, '#0d3008');
+  // 트랙 면
+  drawTrackFace();
+  // 트랙 선
+  drawTrackOval(RX, RY, 'rgba(255,255,255,0.4)', 2);
+  // 레인 구분선
+  const laneCount = Math.min(horses.length, 8);
+  for (let l=1; l<laneCount; l++) {
+    const off = -30 + l*(60/laneCount);
+    drawTrackOval(RX+off, RY+off, 'rgba(255,255,255,0.08)', 1);
+  }
+
+  // 결승선
+  const finishAngle = -Math.PI/2;
+  const fp1 = trackPos(finishAngle, -40);
+  const fp2 = trackPos(finishAngle, 40);
+  ctx.strokeStyle = '#f5c518';
+  ctx.lineWidth = 4;
+  ctx.setLineDash([8,6]);
+  ctx.beginPath(); ctx.moveTo(fp1.x, fp1.y); ctx.lineTo(fp2.x, fp2.y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#f5c518';
+  ctx.font = 'bold 13px "Noto Sans KR"';
+  ctx.textAlign = 'center';
+  ctx.fillText('🏁', fp1.x + (fp2.x-fp1.x)/2, (fp1.y+fp2.y)/2 - 16);
+
+  // 말 트레일
+  horses.forEach(h => {
+    if (h.arrived) return;
+    h.trailPoints.forEach((pt, i) => {
+      const alpha = (i/h.trailPoints.length) * 0.4;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 5*(i/h.trailPoints.length), 0, Math.PI*2);
+      ctx.fillStyle = h.color + Math.floor(alpha*255).toString(16).padStart(2,'0');
+      ctx.fill();
+    });
+  });
+
+  // 말 그리기
+  horses.forEach((h, hi) => {
+    if (h.arrived) return;
+    const laneOffset = -25 + hi * (50 / Math.max(1, names.length-1));
+    const pos = trackPos(h.angle, laneOffset);
+    const shakeX = h.shake > 0 ? (Math.random()-0.5)*6 : 0;
+
+    ctx.save();
+    ctx.translate(pos.x + shakeX, pos.y);
+
+    // 이벤트 상태별 표현
+    if (h.eventState==='sleep') {
+      ctx.globalAlpha=0.6;
+    }
+
+    // 이름 배경
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    const nw=h.name.length*7+16;
+    ctx.beginPath(); ctx.roundRect(-nw/2,-32,nw,18,4); ctx.fill();
+    ctx.fillStyle=h.color;
+    ctx.font='bold 10px "Noto Sans KR"';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(h.name.length>6?h.name.slice(0,5)+'…':h.name,-1,-31);
+
+    // 말 이모지
+    ctx.font='20px serif';
+    ctx.textBaseline='middle';
+
+    if (h.skillActive) {
+      ctx.shadowColor='#ff6aff'; ctx.shadowBlur=16;
+      // 속도선
+      for(let k=1;k<=3;k++){
+        ctx.globalAlpha=0.3/k;
+        ctx.fillText(h.emoji, -k*8, 0);
+      }
+      ctx.globalAlpha=1;
+    }
+
+    ctx.fillText(
+      h.eventState==='toilet'?'🚽':h.eventState==='sleep'?'😴':h.emoji,
+      0, 0
+    );
+
+    if (h.eventState==='kick') {
+      ctx.font='14px serif';
+      ctx.fillText('💥',14,-8);
+    }
+
+    if (h.skillActive) {
+      ctx.font='12px serif';
+      ctx.fillText('⚡',14,-12);
+      ctx.fillText('⚡',-14,-12);
+    }
+
+    ctx.restore();
+  });
+
+  // 완주 말 (중앙 작게)
+  arrived.forEach((h,i) => {
+    const x=CX-60+(i*40);
+    const y=CY;
+    ctx.font='16px serif';
+    ctx.textAlign='center';
+    ctx.fillText(h.emoji, x, y-16);
+    ctx.fillStyle=h.color;
+    ctx.font='bold 11px "Noto Sans KR"';
+    ctx.fillText(i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`, x, y);
+  });
+}
+
+function drawTrackOval(rx, ry, strokeColor, lw, fill=false, fillColor='') {
+  ctx.beginPath();
+  ctx.ellipse(CX, CY, rx, ry, 0, 0, Math.PI*2);
+  if (fill) { ctx.fillStyle=fillColor; ctx.fill(); }
+  if (lw>0) { ctx.strokeStyle=strokeColor; ctx.lineWidth=lw; ctx.stroke(); }
+}
+function drawTrackFace() {
+  ctx.beginPath();
+  ctx.ellipse(CX, CY, RX+36, RY+36, 0, 0, Math.PI*2);
+  ctx.ellipse(CX, CY, RX-36, RY-36, 0, 0, Math.PI*2);
+  ctx.fillStyle='rgba(50,80,20,0.5)';
+  ctx.fill('evenodd');
+}
+
+// ── 업데이트 ──
+function update() {
+  const speed = parseInt(document.getElementById('spd').value);
+  const dt = speed * 0.7;
+
+  tryEvent();
+  trySkill();
+
+  horses.forEach(h => {
+    if (h.arrived) return;
+
+    // 개별 속도 변화
+    h.speedChangeTimer++;
+    if (h.speedChangeTimer >= h.speedChangePeriod) {
+      h.speedChangeTimer = 0;
+      h.speedChangePeriod = 60 + Math.random() * 120;
+      const chg = (Math.random() - 0.35) * 0.6;
+      h.speedMult = Math.max(0.3, Math.min(2.2, h.speedMult + chg));
+    }
+
+    // 이벤트 타이머
+    if (h.eventTimer > 0) {
+      h.eventTimer--;
+      if (h.eventTimer <= 0) {
+        if (h.eventState === 'toilet') {
+          addLog(`🏃 ${h.name}의 말이 돌아왔습니다!`, 'evt');
+        }
+        if (h.eventState === 'sleep' && h.sleepBoostPending) {
+          h.sleepBoostPending = false;
+          h.speedMult = Math.min(3, h.speedMult + 1.2);
+          addLog(`⚡ ${h.name}의 말이 기력 회복 후 질주!`, 'evt');
+        }
+        h.eventState = 'normal';
+      }
+    }
+
+    // 필살기 타이머
+    if (h.skillActive) {
+      h.skillTimer--;
+      if (h.skillTimer <= 0) h.skillActive = false;
+    }
+
+    // 쉐이크 감소
+    if (h.shake > 0) h.shake--;
+
+    // 속도 계산
+    let spd = h.baseSpeed;
+    if (h.eventState === 'toilet') spd = 0;
+    else if (h.eventState === 'sleep') spd = 0;
+    else {
+      spd *= h.speedMult;
+      if (h.skillActive) {
+        const progress = 1 - h.skillTimer/240;
+        spd *= (1 + progress * 3.5); // 점점 가속
+      }
+    }
+
+    // 각도 업데이트
+    h.angle += spd * dt;
+    h.progress = (h.angle + Math.PI/2) / (Math.PI * 2);
+
+    // 랩 체크
+    if (h.angle >= -Math.PI/2 + Math.PI*2*(h.lap+1)) {
+      h.lap++;
+      if (h.lap <= TOTAL_LAPS) addLog(`🔄 ${h.name} ${h.lap}바퀴 완주!`, '');
+    }
+
+    // 트레일 추가
+    const laneOff = -25 + h.i * (50 / Math.max(1, names.length-1));
+    const pos = trackPos(h.angle, laneOff);
+    h.trailPoints.push({x:pos.x, y:pos.y});
+    if (h.trailPoints.length > 12) h.trailPoints.shift();
+
+    // 결승선 통과 (TOTAL_LAPS바퀴 완료)
+    if (h.lap >= TOTAL_LAPS && !h.arrived) {
+      h.arrived = true;
+      arrived.push(h);
+      h.rank = arrived.length;
+      const sym = h.rank===1?'🥇':h.rank===2?'🥈':h.rank===3?'🥉':`${h.rank}위`;
+      addLog(`${sym} ${h.name} 완주! ${h.rank}등!`, 'arrive');
+      playFinish();
+      updateRankPanel();
+    }
+  });
+
+  updateRankPanel();
+  draw();
+
+  if (arrived.length === horses.length && !gameFinished) {
+    gameFinished = true;
+    setTimeout(showResult, 800);
+  } else {
+    frameId = requestAnimationFrame(update);
+  }
+}
+
+// ── 결과 ──
+function showResult() {
+  const items = document.getElementById('resultItems');
+  items.innerHTML = arrived.map((h,i) => {
+    const rank=i+1;
+    const sym=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`${rank}위`;
+    const isPass=usePass&&rank<=passN, isFail=usePass&&rank>passN;
+    return `<div class="res-item" style="animation-delay:${i*0.06}s;border-left:4px solid ${h.color}">
+      <div style="font-family:'Oswald',sans-serif;font-size:18px;min-width:32px;color:${h.color}">${sym}</div>
+      <div style="flex:1;font-family:'Black Han Sans',sans-serif;font-size:15px">${h.name}</div>
+      ${usePass?`<div style="font-size:11px;padding:2px 8px;border-radius:10px;background:${isPass?'rgba(0,230,118,.2)':'rgba(255,77,77,.2)'};color:${isPass?'#00e676':'#ff4d4d'}">${isPass?'✅합격':'❌탈락'}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+// ── 시작 ──
+function startGame() {
+  AC.resume();
+  document.getElementById('startOverlay').style.display='none';
+  createHorses();
+  updateRankPanel();
+  addLog('🚩 출발! 경마 시작!', 'arrive');
+  playStart();
+  gameRunning=true;
+  frameId=requestAnimationFrame(update);
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+</script>
+</body>
+</html>

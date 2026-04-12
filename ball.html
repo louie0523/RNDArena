@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎱 공굴리기 — RANDOM ARENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&family=Oswald:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04040e;--surface:#0a0a1c;--surface2:#12122a;--accent:#00e5ff;--gold:#f5c518;--text:#f0f0f0;--muted:#666;--border:rgba(255,255,255,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(0,0,0,.45);z-index:10;}
+.logo{font-family:'Oswald',sans-serif;font-size:19px;font-weight:900;color:var(--accent);letter-spacing:2px;}
+.back-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 13px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;}
+.back-btn:hover{color:var(--text);}
+.wrap{display:flex;flex:1;overflow:hidden;}
+.canvas-area{flex:1;position:relative;overflow:hidden;}
+canvas#gc{display:block;width:100%;height:100%;}
+
+/* 사이드 패널 */
+.side{width:200px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.ps{padding:10px 11px;border-bottom:1px solid var(--border);}
+.pt{font-family:'Black Han Sans',sans-serif;font-size:11px;letter-spacing:2px;color:var(--accent);margin-bottom:6px;}
+.rank-scroll{flex:1;overflow-y:auto;padding:7px;display:flex;flex-direction:column;gap:3px;min-height:0;}
+.rank-scroll::-webkit-scrollbar{width:3px;}
+.rank-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);}
+.ri{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--surface2);border-radius:6px;font-size:11px;border-left:3px solid transparent;transition:all .4s;}
+.ri.done{border-left-color:var(--gold);background:rgba(245,197,24,.05);}
+.ri.leading{border-left-color:var(--accent);background:rgba(0,229,255,.06);}
+.evt-wrap{flex-shrink:0;border-top:1px solid var(--border);display:flex;flex-direction:column;min-height:200px;max-height:260px;}
+.evt-log{flex:1;overflow-y:auto;display:flex;flex-direction:column-reverse;padding:7px;font-size:10px;}
+.evt-log::-webkit-scrollbar{width:3px;}
+.log{color:var(--muted);padding:2px 0;line-height:1.5;}
+.log.sp{color:var(--gold);}.log.sk{color:#c864ff;}
+input[type=range]{width:100%;accent-color:var(--accent);}
+select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;}
+select:focus{border-color:var(--accent);}
+
+/* 시작 오버레이 */
+.start-ov{position:absolute;inset:0;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;}
+.ot{font-family:'Black Han Sans',sans-serif;font-size:26px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;}
+.os{font-size:13px;color:var(--muted);margin-bottom:18px;text-align:center;line-height:1.9;}
+/* 시작 전 크기 설정 */
+.size-row{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
+.size-row label{font-size:13px;color:var(--muted);}
+.size-sel{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;min-width:120px;}
+.size-sel:focus{border-color:var(--accent);}
+.sbtn{background:linear-gradient(135deg,#f5c518,#ff9500);color:#000;border:none;padding:13px 42px;border-radius:50px;font-family:'Black Han Sans',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+.sbtn:hover{transform:scale(1.05);box-shadow:0 8px 28px rgba(245,197,24,.5);}
+
+/* 결과 오버레이 */
+.res-ov{position:fixed;inset:0;background:rgba(0,0,0,.93);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:24px;overflow-y:auto;}
+.res-ov.show{display:flex;}
+.res-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:900;background:linear-gradient(135deg,#f5c518,#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:18px;}
+.res-item{display:flex;align-items:center;gap:12px;padding:9px 15px;margin-bottom:5px;background:rgba(255,255,255,.05);border-radius:9px;width:100%;max-width:400px;animation:sli .3s ease forwards;opacity:0;}
+@keyframes sli{from{transform:translateX(-16px);opacity:0}to{transform:translateX(0);opacity:1}}
+.cbtn{margin-top:14px;background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);padding:9px 26px;border-radius:7px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.cbtn:hover{color:var(--text);}
+.scroll-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,.2);pointer-events:none;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🎱 공굴리기</div>
+  <div style="font-size:11px;color:var(--muted)" id="statusMsg">준비중...</div>
+  <button class="back-btn" onclick="history.back()">← 돌아가기</button>
+</header>
+<div class="wrap">
+  <div class="canvas-area" id="canvasArea">
+    <canvas id="gc"></canvas>
+    <!-- 시작 오버레이 -->
+    <div class="start-ov" id="startOv">
+      <div class="ot">🎱 공굴리기</div>
+      <div class="os" id="pInfo">참가자 로딩중...</div>
+      <div class="size-row">
+        <label>트랙 길이:</label>
+        <select class="size-sel" id="sizeSelect">
+          <option value="1">기본 (1x)</option>
+          <option value="2">2배</option>
+          <option value="3">3배</option>
+          <option value="4">4배</option>
+          <option value="5">5배</option>
+          <option value="6">6배</option>
+          <option value="7">7배</option>
+          <option value="8">8배</option>
+          <option value="9">9배</option>
+          <option value="10">10배</option>
+        </select>
+      </div>
+      <button class="sbtn" onclick="startGame()">🎲 시작!</button>
+    </div>
+    <div class="scroll-hint" id="scrollHint">🖱️ 휠로 스크롤 가능</div>
+  </div>
+
+  <!-- 사이드 패널 -->
+  <div class="side">
+    <div class="ps">
+      <div class="pt">⚡ 속도</div>
+      <input type="range" id="spd" min="0.05" max="5" step="0.05" value="1">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span>극저속</span><span id="spdLabel">1x</span><span>빠름</span></div>
+    </div>
+    <div class="ps">
+      <div class="pt">🔢 트랙 길이</div>
+      <select id="sizeSelectSide" onchange="document.getElementById('sizeSelect').value=this.value">
+        <option value="1">기본 (1x)</option>
+        <option value="2">2배</option>
+        <option value="3">3배</option>
+        <option value="4">4배</option>
+        <option value="5">5배</option>
+        <option value="6">6배</option>
+        <option value="7">7배</option>
+        <option value="8">8배</option>
+        <option value="9">9배</option>
+        <option value="10">10배</option>
+      </select>
+    </div>
+    <div class="ps"><div class="pt">🏆 순위</div></div>
+    <div class="rank-scroll" id="rankList"></div>
+    <div class="evt-wrap">
+      <div class="ps" style="padding:8px 11px"><div class="pt" style="margin-bottom:0">📢 이벤트</div></div>
+      <div class="evt-log" id="evtLog"></div>
+    </div>
+  </div>
+</div>
+
+<div class="res-ov" id="resOv">
+  <div class="res-title">🏆 결과 발표!</div>
+  <div id="resItems"></div>
+  <button class="cbtn" onclick="document.getElementById('resOv').classList.remove('show')">✕ 닫기</button>
+</div>
+
+<script>
+// ═══ 파라미터 ═════════════════════════════════════════
+const params  = new URLSearchParams(location.search);
+const names   = params.get('names')?params.get('names').split(',').filter(Boolean):['철수','영희','민준','지수','태양','현우','지연','승호'];
+const usePass = params.get('usePass')==='true';
+const passN   = parseInt(params.get('passN'))||3;
+document.getElementById('pInfo').innerHTML=`참가자 ${names.length}명<br>비스듬한 장애물을 튕기며 내려와<br>깔때기를 통과한 순서대로 순위!`;
+
+// ═══ 상수 ════════════════════════════════════════════
+const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
+const BALL_R = 12;
+const G      = 0.22;   // 중력
+const BOUNCE = 0.62;   // 반발 계수 (높임)
+const FRIC   = 0.9985; // 공기저항 (마찰 최소화)
+
+// ═══ 사운드 시스템 ════════════════════════════════════
+let audioCtx = null;
+function getAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playHit(vol=0.15, pitch=1.0){
+  try{
+    const ac=getAudio();
+    const osc=ac.createOscillator();
+    const gain=ac.createGain();
+    osc.connect(gain);gain.connect(ac.destination);
+    osc.type='triangle';
+    osc.frequency.setValueAtTime(300*pitch,ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(90*pitch,ac.currentTime+0.09);
+    gain.gain.setValueAtTime(vol,ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.12);
+    osc.start();osc.stop(ac.currentTime+0.13);
+  }catch(e){}
+}
+function playBallCollide(){
+  try{
+    const ac=getAudio();
+    const osc=ac.createOscillator();
+    const gain=ac.createGain();
+    osc.connect(gain);gain.connect(ac.destination);
+    osc.type='sine';
+    osc.frequency.setValueAtTime(500+Math.random()*160,ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200,ac.currentTime+0.07);
+    gain.gain.setValueAtTime(0.09,ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.09);
+    osc.start();osc.stop(ac.currentTime+0.1);
+  }catch(e){}
+}
+function playGoal(rank){
+  try{
+    const ac=getAudio();
+    const notes=rank===1?[523,659,784,1047]:rank<=3?[523,659,784]:[440,523];
+    notes.forEach((freq,i)=>{
+      const osc=ac.createOscillator();
+      const gain=ac.createGain();
+      osc.connect(gain);gain.connect(ac.destination);
+      osc.type='square';
+      osc.frequency.setValueAtTime(freq,ac.currentTime+i*0.09);
+      gain.gain.setValueAtTime(0,ac.currentTime+i*0.09);
+      gain.gain.linearRampToValueAtTime(0.13,ac.currentTime+i*0.09+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+i*0.09+0.22);
+      osc.start(ac.currentTime+i*0.09);
+      osc.stop(ac.currentTime+i*0.09+0.24);
+    });
+    const drum=ac.createOscillator();
+    const dg=ac.createGain();
+    drum.connect(dg);dg.connect(ac.destination);
+    drum.type='sawtooth';drum.frequency.setValueAtTime(80,ac.currentTime);
+    dg.gain.setValueAtTime(0.16,ac.currentTime);
+    dg.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.18);
+    drum.start();drum.stop(ac.currentTime+0.19);
+  }catch(e){}
+}
+let lastHitSound=0;
+
+// ═══ 캔버스 & 카메라 ═════════════════════════════════
+const canvas = document.getElementById('gc');
+const ctx    = canvas.getContext('2d');
+const area   = document.getElementById('canvasArea');
+
+let VW=0, VH=0;
+let TRACK_W=460;   // 트랙 폭 (고정)
+let WORLD_H=4000;  // 월드 높이 (배율에 따라 변화)
+let camY=0, camTargetY=0;
+let manualOffset=0, isManual=false, manualTimer=null;
+
+function resizeCanvas(){
+  VW=area.clientWidth; VH=area.clientHeight;
+  canvas.width=VW; canvas.height=VH;
+}
+resizeCanvas();
+window.addEventListener('resize',()=>{resizeCanvas();});
+
+area.addEventListener('wheel',e=>{
+  e.preventDefault();
+  manualOffset+=e.deltaY*0.7;
+  manualOffset=Math.max(-VH,Math.min(WORLD_H,manualOffset));
+  isManual=true;
+  clearTimeout(manualTimer);
+  manualTimer=setTimeout(()=>{isManual=false;manualOffset=0;},2500);
+},{passive:false});
+
+// ═══ 세계 데이터 ══════════════════════════════════════
+let walls=[], movers=[], balls=[], arrived=[], impacts=[];
+let running=false, finished=false, tick=0, lastSkillT=0;
+
+// ═══ 월드 빌드 ════════════════════════════════════════
+// 핵심 원칙:
+//  1) 모든 정적 장애물은 비스듬한 선분 — 수평/수직 없음
+//  2) 장애물마다 반드시 공이 내려갈 수 있는 통로 확보
+//  3) 끝에 깔때기(funnel)로 수렴
+function buildWorld(){
+  walls=[]; movers=[];
+  const sizeMult = parseFloat(document.getElementById('sizeSelect').value)||1;
+  const cx = TRACK_W/2;
+  const BASE_H = 3500;
+  WORLD_H = Math.max(2500, BASE_H * sizeMult + 500);
+
+  const PLAY_START  = 80;
+  const FUNNEL_TOP  = WORLD_H - 700;
+  const FINISH_Y    = WORLD_H - 50;
+
+  // ── 경계벽 (비스듬히 미세하게 — 살짝 안쪽으로 기울어진 느낌) ──
+  // 완전 수직 대신 살짝 기울여서 공이 자연스럽게 흘러내리게
+  walls.push({x1:-2,y1:0,       x2:2,      y2:FUNNEL_TOP, isBound:true});
+  walls.push({x1:TRACK_W+2,y1:0,x2:TRACK_W-2,y2:FUNNEL_TOP, isBound:true});
+
+  // ══ 장애물 배치 ════════════════════════════════════════════
+  // SECTION_H: 구역 높이
+  const SECTION_H = 200 * Math.max(1, sizeMult * 0.7);
+  const sections  = Math.floor((FUNNEL_TOP - PLAY_START - 80) / SECTION_H);
+
+  // 통로 방향 (left/right 교대 — 지그재그 흐름 유도)
+  let passDir = Math.random()<0.5 ? 'left' : 'right';
+
+  for(let s=0; s<sections; s++){
+    const topY = PLAY_START + 60 + s * SECTION_H;
+    const midY = topY + SECTION_H * 0.5;
+    const type = s % 6;   // 6가지 패턴
+
+    // 통로 반대쪽 = 장애물 쪽
+    const obsSide = passDir === 'left' ? 'right' : 'left';
+
+    // ──────────────────────────────────────────────────
+    // 패턴 0: 경사 판 — 한쪽 벽에서 뻗어나온 비스듬한 선분
+    //   통로는 반대편, 장애물은 기울어진 판 1개
+    // ──────────────────────────────────────────────────
+    if(type===0){
+      const len    = TRACK_W*(0.40+Math.random()*0.18);  // 판 길이: 트랙 40~58%
+      const dip    = 35+Math.random()*40;                 // 기울기 (y차)
+      if(obsSide==='right'){
+        // 오른쪽에서 왼쪽으로 비스듬히 내려오는 판
+        // 공은 판 위에서 왼쪽 통로로 미끄러져 내려감
+        const x1=TRACK_W, y1=midY-dip*0.4;
+        const x2=TRACK_W-len, y2=midY+dip*0.6;
+        walls.push({x1,y1,x2,y2});
+      } else {
+        // 왼쪽에서 오른쪽으로 비스듬히
+        const x1=0, y1=midY-dip*0.4;
+        const x2=len, y2=midY+dip*0.6;
+        walls.push({x1,y1,x2,y2});
+      }
+
+    // ──────────────────────────────────────────────────
+    // 패턴 1: X자 / 위아래 교차 경사 2개
+    //   위판은 오른→왼 경사, 아래판은 왼→오른 경사
+    //   중앙에 좁은 통로 존재
+    // ──────────────────────────────────────────────────
+    } else if(type===1){
+      const gapW = BALL_R*3.5;               // 중앙 통로 폭
+      const hlen = TRACK_W*0.5 - gapW/2;     // 각 판 길이
+      const tilt = 28+Math.random()*22;
+      const offY = -40;
+      // 위판: 왼쪽에서 중앙 직전까지 (오른쪽으로 내려가는 경사)
+      walls.push({x1:0,     y1:midY+offY,        x2:hlen,      y2:midY+offY+tilt});
+      // 아래판: 오른쪽에서 중앙 직전까지 (왼쪽으로 내려가는 경사)
+      walls.push({x1:TRACK_W,y1:midY+offY,       x2:TRACK_W-hlen,y2:midY+offY+tilt});
+      // 중앙 좁은 부분은 비어있음 → 공이 통과
+
+    // ──────────────────────────────────────────────────
+    // 패턴 2: 움직이는 기울어진 막대 (hbar — 좌우 왕복)
+    //   막대 자체가 약간 회전되어 있음 → 공이 비스듬히 튕김
+    // ──────────────────────────────────────────────────
+    } else if(type===2){
+      const gap  = BALL_R*3.2;
+      const bw   = Math.min(TRACK_W*0.42, 110+Math.random()*50);
+      const range= (TRACK_W - bw - gap*2)*0.44;
+      const tiltAngle = (Math.random()-0.5)*0.45;  // 기울기 rad (±약25도)
+      movers.push({
+        type:'hbar',
+        ox:cx, oy:midY,
+        x:cx, y:midY,
+        w:bw, h:13,
+        angle:tiltAngle,
+        speed:0.55+Math.random()*0.65,
+        range,
+        phase:Math.random()*Math.PI*2,
+        gap,
+      });
+
+    // ──────────────────────────────────────────────────
+    // 패턴 3: 비스듬한 상하 이동 장벽
+    //   막대가 45° 정도 기울어진 채로 상하 왕복
+    //   공은 비스듬히 튕겨 방향 전환
+    // ──────────────────────────────────────────────────
+    } else if(type===3){
+      const bw = TRACK_W*0.38+Math.random()*TRACK_W*0.1;
+      const bxC= BALL_R*2.5+Math.random()*(TRACK_W-bw-BALL_R*5);
+      const angle= (Math.random()<0.5?1:-1)*(0.3+Math.random()*0.4); // 기울기 ±rad
+      const vrange=35+Math.random()*35;
+      movers.push({
+        type:'vbar',
+        ox:bxC+bw/2, oy:midY,
+        x:bxC+bw/2, y:midY,
+        w:bw, h:13,
+        angle,
+        speed:0.5+Math.random()*0.55,
+        range:vrange,
+        phase:Math.random()*Math.PI*2,
+      });
+
+    // ──────────────────────────────────────────────────
+    // 패턴 4: V자 경사쌍 — 위에서 보면 V
+    //   양쪽에서 중앙으로 비스듬히 모으되 중앙 아래는 열려있음
+    //   공이 중앙 구멍으로 가속되며 떨어짐
+    // ──────────────────────────────────────────────────
+    } else if(type===4){
+      const gapV  = BALL_R*3.0;
+      const wingL = TRACK_W*0.42;
+      const tiltV = 32+Math.random()*28;
+      // 왼쪽 판: 왼쪽 위 → 중앙 아래로
+      walls.push({x1:0,       y1:midY-tiltV*0.3, x2:cx-gapV/2, y2:midY+tiltV*0.7});
+      // 오른쪽 판: 오른쪽 위 → 중앙 아래로
+      walls.push({x1:TRACK_W, y1:midY-tiltV*0.3, x2:cx+gapV/2, y2:midY+tiltV*0.7});
+
+    // ──────────────────────────────────────────────────
+    // 패턴 5: 역V (지붕형) — 중앙 높고 양옆으로 내려가는 경사
+    //   공이 중앙에서 좌우로 굴러 떨어짐
+    //   통로는 좌우 끝
+    // ──────────────────────────────────────────────────
+    } else {
+      const gapE = BALL_R*2.8;
+      const wingE= TRACK_W*0.40;
+      const tiltE= 28+Math.random()*25;
+      // 왼쪽 지붕: 중앙 위 → 왼쪽 아래
+      walls.push({x1:cx,        y1:midY-tiltE*0.4, x2:cx-wingE, y2:midY+tiltE*0.6});
+      // 오른쪽 지붕: 중앙 위 → 오른쪽 아래
+      walls.push({x1:cx,        y1:midY-tiltE*0.4, x2:cx+wingE, y2:midY+tiltE*0.6});
+      // 양끝엔 공이 내려갈 수 있는 열린 공간 (벽이 없음)
+    }
+
+    // 통로 방향 교대
+    passDir = passDir==='left'?'right':'left';
+  }
+
+  // ══ 깔때기 ════════════════════════════════════════════
+  // 경사진 선분들로 수렴 — 수직선 없음, 모두 비스듬히
+  const FUNNEL_H   = FINISH_Y - FUNNEL_TOP - 30;
+  const funnelGap  = BALL_R * 2.4;   // 최종 통로 폭 (공 한 개)
+  const STEPS      = 14;
+
+  for(let i=0;i<STEPS;i++){
+    const t  = i/STEPS, t2=(i+1)/STEPS;
+    const y1 = FUNNEL_TOP + t *FUNNEL_H;
+    const y2 = FUNNEL_TOP + t2*FUNNEL_H;
+    const lx1= t *(cx - funnelGap/2);       // 왼쪽: 0 → cx-gap
+    const lx2= t2*(cx - funnelGap/2);
+    const rx1= TRACK_W - t *(TRACK_W/2 - funnelGap/2);  // 오른쪽: TRACK_W → cx+gap
+    const rx2= TRACK_W - t2*(TRACK_W/2 - funnelGap/2);
+    walls.push({x1:lx1,y1:y1,x2:lx2,y2:y2,isFunnel:true});
+    walls.push({x1:rx1,y1:y1,x2:rx2,y2:y2,isFunnel:true});
+  }
+  // 깔때기 하단 — 좁은 수직 구간 (비스듬히 살짝)
+  const fy = FUNNEL_TOP+FUNNEL_H;
+  walls.push({x1:cx-funnelGap/2+1, y1:fy, x2:cx-funnelGap/2-1, y2:FINISH_Y, isFunnel:true});
+  walls.push({x1:cx+funnelGap/2-1, y1:fy, x2:cx+funnelGap/2+1, y2:FINISH_Y, isFunnel:true});
+}
+
+// ═══ 공 생성 ══════════════════════════════════════════
+function spawnBalls(){
+  const cx=TRACK_W/2;
+  const sp=Math.max(24,Math.min(46,(TRACK_W-60)/names.length));
+  const sx=cx-sp*(names.length-1)/2;
+  balls=names.map((name,i)=>({
+    name,i,
+    x:sx+i*sp+(Math.random()-.5)*3,
+    y:BALL_R+10,
+    vx:(Math.random()-.5)*.7,
+    vy:0.4+Math.random()*.2,
+    r:BALL_R, color:COLORS[i%COLORS.length],
+    arrived:false, rank:0,
+    gMult:0.90+Math.random()*0.20,
+    spdMult:1.0, spdTimer:0, spdPeriod:160+Math.random()*200,
+    skillReady:false, skillActive:false, skillTimer:0,
+    lastY:0, stuckCnt:0,
+    trail:[],
+    hitFlash:0,
+    angle:0, // 공 회전각
+  }));
+  const sn=1+Math.floor(names.length/10);
+  shuffle(balls.map((_,i)=>i)).slice(0,sn).forEach(i=>balls[i].skillReady=true);
+}
+
+// ═══ 충돌: 볼 ↔ 선분 ══════════════════════════════════
+// 선분에 비스듬한 각도가 있으면 공이 자연스럽게 굴러감
+function colSegment(b,x1,y1,x2,y2){
+  const dx=x2-x1, dy=y2-y1;
+  const lenSq=dx*dx+dy*dy;
+  if(lenSq<0.0001)return;
+  let t=((b.x-x1)*dx+(b.y-y1)*dy)/lenSq;
+  t=Math.max(0,Math.min(1,t));
+  const cx=x1+t*dx, cy=y1+t*dy;
+  const ex=b.x-cx, ey=b.y-cy;
+  const dist=Math.sqrt(ex*ex+ey*ey);
+  if(dist>=b.r||dist<0.001)return;
+  const nx=ex/dist, ny=ey/dist;
+  const ov=b.r-dist;
+  b.x+=nx*ov; b.y+=ny*ov;
+  const dot=b.vx*nx+b.vy*ny;
+  if(dot<0){
+    b.vx-=(1+BOUNCE)*dot*nx;
+    b.vy-=(1+BOUNCE)*dot*ny;
+    b.vx*=0.96; b.vy*=0.96; // 에너지 손실 최소화 (0.87→0.96)
+    b.hitFlash=8;
+    spawnHit(b.x,b.y,b.color,4);
+    // 충돌 사운드 (너무 잦지 않게)
+    const now=Date.now();
+    if(now-lastHitSound>40){lastHitSound=now;playHit(0.10+Math.min(0.12,Math.abs(dot)*0.015),0.7+Math.random()*0.6);}
+  }
+}
+
+// ═══ 충돌: 볼 ↔ 회전된 무버 ══════════════════════════
+// 무버에 angle이 있으면 로컬 좌표로 변환해서 처리
+function colMover(b,m){
+  const ang=m.angle||0;
+  const cos=Math.cos(-ang), sin=Math.sin(-ang);
+  const lx=(b.x-m.x)*cos-(b.y-m.y)*sin;
+  const ly=(b.x-m.x)*sin+(b.y-m.y)*cos;
+  const hw=m.w/2, hh=m.h/2;
+  const clx=Math.max(-hw,Math.min(hw,lx));
+  const cly=Math.max(-hh,Math.min(hh,ly));
+  const ddx=lx-clx, ddy=ly-cly;
+  const dsq=ddx*ddx+ddy*ddy;
+  if(dsq>=b.r*b.r)return;
+  const d=Math.sqrt(dsq)||0.001;
+  const lnx=ddx/d, lny=ddy/d;
+  // 월드 좌표 노멀
+  const wnx=lnx*Math.cos(ang)-lny*Math.sin(ang);
+  const wny=lnx*Math.sin(ang)+lny*Math.cos(ang);
+  const ov=b.r-d;
+  b.x+=wnx*ov; b.y+=wny*ov;
+  const dot=b.vx*wnx+b.vy*wny;
+  if(dot<0){
+    b.vx-=(1+BOUNCE)*dot*wnx;
+    b.vy-=(1+BOUNCE)*dot*wny;
+    b.vx*=0.96; b.vy*=0.96; // 에너지 손실 최소화
+    b.hitFlash=8;
+    spawnHit(b.x,b.y,b.color,4);
+    const now=Date.now();
+    if(now-lastHitSound>40){lastHitSound=now;playHit(0.12+Math.min(0.12,Math.abs(dot)*0.015),0.9+Math.random()*0.4);}
+  }
+}
+
+// ═══ 볼끼리 충돌 ══════════════════════════════════════
+function colBalls(a,b){
+  const dx=b.x-a.x, dy=b.y-a.y;
+  const d=Math.sqrt(dx*dx+dy*dy), mn=a.r+b.r;
+  if(d>=mn||d<0.001)return;
+  const nx=dx/d, ny=dy/d, ov=(mn-d)/2;
+  if(!a.arrived){a.x-=nx*ov;a.y-=ny*ov;}
+  if(!b.arrived){b.x+=nx*ov;b.y+=ny*ov;}
+  const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+  if(rv>=0)return;
+  const imp=rv*0.5;
+  if(!a.arrived){a.vx+=imp*nx;a.vy+=imp*ny;}
+  if(!b.arrived){b.vx-=imp*nx;b.vy-=imp*ny;}
+  // 공끼리 부딪힐 때 사운드
+  const now=Date.now();
+  if(now-lastHitSound>50){lastHitSound=now;playBallCollide();}
+}
+
+// ═══ 이펙트 ═══════════════════════════════════════════
+function spawnHit(x,y,col,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=0.8+Math.random()*2.2;
+    impacts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,r:1.5+Math.random()*2.2,life:1,d:0.06+Math.random()*0.04});
+  }
+}
+
+// ═══ 무버 업데이트 ════════════════════════════════════
+function updateMovers(){
+  movers.forEach(m=>{
+    if(m.type==='hbar'){
+      m.x=m.ox+Math.sin(tick*m.speed*0.03+m.phase)*m.range;
+    } else {
+      m.y=m.oy+Math.sin(tick*m.speed*0.03+m.phase)*m.range;
+    }
+  });
+}
+
+// ═══ 필살기 & 속도 변화 ══════════════════════════════
+function trySkill(b){
+  if(!b.skillReady||b.skillActive||b.arrived)return;
+  if(Date.now()-lastSkillT<4000)return;
+  if(Math.random()>0.0008)return;
+  b.skillActive=true;b.skillTimer=260;lastSkillT=Date.now();
+  addLog(`💥 ${b.name} 필살기 발동!`,'sk');
+  spawnHit(b.x,b.y,'#c864ff',20);
+}
+function updateSpdVar(b){
+  b.spdTimer++;
+  if(b.spdTimer<b.spdPeriod)return;
+  b.spdTimer=0;b.spdPeriod=160+Math.random()*200;
+  b.spdMult=Math.max(0.65,Math.min(1.7,b.spdMult+(Math.random()-0.38)*0.3));
+}
+
+// ═══ 막힘 감지 ════════════════════════════════════════
+function checkStuck(b){
+  if(tick%120!==b.i%120)return;
+  const dy=b.y-b.lastY;
+  b.lastY=b.y;
+  if(dy<1.5&&!b.arrived){
+    b.stuckCnt++;
+    if(b.stuckCnt>=2){
+      b.stuckCnt=0;
+      b.vy+=2.0+Math.random()*1.5;
+      b.vx+=(Math.random()-0.5)*3;
+      addLog(`⚡ ${b.name} 탈출!`,'');
+    }
+  } else {
+    b.stuckCnt=0;
+  }
+}
+
+// ═══ 물리 스텝 ════════════════════════════════════════
+function physicsStep(){
+  const FINISH_Y=WORLD_H-50;
+  const FUNNEL_TOP=WORLD_H-700;
+
+  balls.forEach(b=>{
+    if(b.arrived)return;
+    updateSpdVar(b);trySkill(b);
+    if(b.skillActive){b.skillTimer--;if(b.skillTimer<=0)b.skillActive=false;}
+
+    // ── 중력 (자연스럽게) ──
+    const gm=b.gMult*b.spdMult*(b.skillActive?2.6:1.0);
+    b.vy+=G*gm;
+    b.vx*=FRIC; b.vy*=FRIC;
+
+    const maxV=b.skillActive?16:9;
+    const spd2=Math.sqrt(b.vx*b.vx+b.vy*b.vy);
+    if(spd2>maxV){b.vx*=maxV/spd2;b.vy*=maxV/spd2;}
+
+    b.x+=b.vx; b.y+=b.vy;
+    // 공 회전 (속도에 비례)
+    b.angle = (b.angle||0) + b.vx/b.r;
+
+    // 경계 (깔때기 전까지)
+    if(b.y<FUNNEL_TOP){
+      if(b.x-b.r<1){b.x=b.r+1;b.vx=Math.abs(b.vx)*BOUNCE;}
+      if(b.x+b.r>TRACK_W-1){b.x=TRACK_W-b.r-1;b.vx=-Math.abs(b.vx)*BOUNCE;}
+    }
+    if(b.y-b.r<0){b.y=b.r;b.vy=Math.abs(b.vy)*0.3;}
+    if(b.hitFlash>0)b.hitFlash--;
+
+    walls.forEach(w=>colSegment(b,w.x1,w.y1,w.x2,w.y2));
+    movers.forEach(m=>colMover(b,m));
+
+    b.trail.push({x:b.x,y:b.y});
+    if(b.trail.length>14)b.trail.shift();
+    checkStuck(b);
+
+    if(b.y+b.r>=FINISH_Y&&!b.arrived){
+      b.arrived=true;b.y=FINISH_Y-b.r;
+      arrived.push(b);b.rank=arrived.length;
+      const sym=b.rank===1?'🥇':b.rank===2?'🥈':b.rank===3?'🥉':`${b.rank}위`;
+      addLog(`${sym} ${b.name} 도착! (${b.rank}등)`,'sp');
+      spawnHit(b.x,b.y,b.color,24);
+      playGoal(b.rank); // 골인 사운드
+      updateRankPanel();
+    }
+  });
+
+  for(let i=0;i<balls.length;i++)
+    for(let j=i+1;j<balls.length;j++)
+      if(!balls[i].arrived&&!balls[j].arrived)colBalls(balls[i],balls[j]);
+
+  impacts=impacts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.life-=p.d;return p.life>0;});
+}
+
+// ═══ 카메라 ═══════════════════════════════════════════
+function updateCamera(){
+  const alive=balls.filter(b=>!b.arrived);
+  let leadY=80;
+  if(alive.length>0) leadY=Math.max(...alive.map(b=>b.y));
+  else if(arrived.length>0) leadY=WORLD_H-50;
+
+  camTargetY=leadY-VH*0.52;
+  camTargetY=Math.max(0,Math.min(WORLD_H-VH,camTargetY));
+
+  if(isManual){
+    camY+=(camTargetY+manualOffset-camY)*0.10;
+  } else {
+    camY+=(camTargetY-camY)*0.06;
+  }
+  camY=Math.max(0,Math.min(WORLD_H-VH,camY));
+}
+
+// ═══ 그리기 ═══════════════════════════════════════════
+function draw(){
+  ctx.clearRect(0,0,VW,VH);
+
+  // 배경
+  const bg=ctx.createLinearGradient(0,0,0,VH);
+  bg.addColorStop(0,'#04041a');bg.addColorStop(.5,'#060818');bg.addColorStop(1,'#04100c');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,VW,VH);
+
+  const trackOffX=(VW-TRACK_W)/2;
+  ctx.save();
+  ctx.translate(trackOffX,-camY);
+
+  // 격자
+  ctx.strokeStyle='rgba(255,255,255,0.022)';ctx.lineWidth=1;
+  const gs=50, y0=Math.floor(camY/gs)*gs, y1=camY+VH+gs;
+  for(let y=y0;y<y1;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(TRACK_W,y);ctx.stroke();}
+  for(let x=0;x<=TRACK_W;x+=gs){ctx.beginPath();ctx.moveTo(x,camY);ctx.lineTo(x,camY+VH);ctx.stroke();}
+
+  // START
+  const sGr=ctx.createLinearGradient(0,0,0,70);
+  sGr.addColorStop(0,'rgba(0,229,255,0.09)');sGr.addColorStop(1,'rgba(0,229,255,0)');
+  ctx.fillStyle=sGr;ctx.fillRect(0,0,TRACK_W,70);
+  ctx.strokeStyle='rgba(0,229,255,0.28)';ctx.lineWidth=2;ctx.setLineDash([6,7]);
+  ctx.beginPath();ctx.moveTo(0,68);ctx.lineTo(TRACK_W,68);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(0,229,255,0.6)';ctx.font='bold 10px "Noto Sans KR"';ctx.textAlign='left';
+  ctx.fillText('🚀 START',8,56);
+
+  // FINISH
+  const FINISH_Y=WORLD_H-50;
+  for(let x=0;x<TRACK_W;x+=16){
+    ctx.fillStyle=(Math.floor(x/16)%2===0)?'rgba(245,197,24,0.78)':'rgba(0,0,0,0.5)';
+    ctx.fillRect(x,FINISH_Y-7,16,7);
+  }
+  const fgr=ctx.createLinearGradient(0,FINISH_Y,0,FINISH_Y+5);
+  fgr.addColorStop(0,'rgba(245,197,24,0.7)');fgr.addColorStop(1,'transparent');
+  ctx.fillStyle=fgr;ctx.fillRect(0,FINISH_Y,TRACK_W,5);
+  ctx.fillStyle='rgba(245,197,24,0.9)';ctx.font='bold 10px "Noto Sans KR"';ctx.textAlign='left';
+  ctx.fillText('🏁 FINISH',8,FINISH_Y-12);
+
+  arrived.forEach((b,i)=>{
+    const ax=20+i*28, ay=FINISH_Y+20;
+    ctx.beginPath();ctx.arc(ax,ay,10,0,Math.PI*2);
+    ctx.fillStyle=b.color+'bb';ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 7px "Noto Sans KR"';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,ax,ay);
+  });
+
+  // ── 정적 벽 ──
+  ctx.lineCap='round';
+  walls.forEach(w=>{
+    ctx.beginPath();ctx.moveTo(w.x1,w.y1);ctx.lineTo(w.x2,w.y2);
+    if(w.isFunnel){
+      ctx.strokeStyle='rgba(245,197,24,0.85)';ctx.lineWidth=5;
+      ctx.shadowColor='rgba(245,197,24,0.45)';ctx.shadowBlur=10;
+    } else if(w.isBound){
+      ctx.strokeStyle='rgba(80,120,255,0.18)';ctx.lineWidth=2;ctx.shadowBlur=0;
+    } else {
+      ctx.strokeStyle='rgba(110,165,255,0.88)';ctx.lineWidth=5;
+      ctx.shadowColor='rgba(100,150,255,0.42)';ctx.shadowBlur=10;
+    }
+    ctx.stroke();
+    ctx.shadowBlur=0;
+    // 끝점 마감
+    if(!w.isBound&&!w.isFunnel){
+      [[w.x1,w.y1],[w.x2,w.y2]].forEach(([px,py])=>{
+        ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);
+        ctx.fillStyle='rgba(150,200,255,0.75)';ctx.fill();
+      });
+    }
+  });
+
+  // ── 움직이는 막대 (기울어진 상태로 그림) ──
+  movers.forEach(m=>{
+    const ang=m.angle||0;
+    // 궤도 표시
+    if(m.type==='hbar'){
+      ctx.strokeStyle='rgba(255,130,0,0.06)';ctx.lineWidth=2;ctx.setLineDash([4,8]);
+      ctx.beginPath();ctx.moveTo(m.ox-m.range,m.oy);ctx.lineTo(m.ox+m.range,m.oy);
+      ctx.stroke();ctx.setLineDash([]);
+    } else {
+      ctx.strokeStyle='rgba(200,100,255,0.06)';ctx.lineWidth=2;ctx.setLineDash([4,8]);
+      ctx.beginPath();ctx.moveTo(m.ox,m.oy-m.range);ctx.lineTo(m.ox,m.oy+m.range);
+      ctx.stroke();ctx.setLineDash([]);
+    }
+    // 막대 본체 (기울어진 상태)
+    ctx.save();
+    ctx.translate(m.x,m.y);
+    ctx.rotate(ang);
+    const isH=m.type==='hbar';
+    const mg=ctx.createLinearGradient(-m.w/2,0,m.w/2,0);
+    if(isH){
+      mg.addColorStop(0,'rgba(200,70,0,0.88)');mg.addColorStop(0.5,'rgba(255,140,30,0.97)');mg.addColorStop(1,'rgba(200,70,0,0.88)');
+    } else {
+      mg.addColorStop(0,'rgba(140,30,220,0.88)');mg.addColorStop(0.5,'rgba(185,75,255,0.97)');mg.addColorStop(1,'rgba(140,30,220,0.88)');
+    }
+    ctx.fillStyle=mg;
+    ctx.strokeStyle=isH?'rgba(255,170,70,0.48)':'rgba(210,140,255,0.48)';
+    ctx.lineWidth=1.5;
+    ctx.shadowColor=isH?'rgba(255,130,0,0.38)':'rgba(180,80,255,0.38)';
+    ctx.shadowBlur=9;
+    ctx.beginPath();ctx.roundRect(-m.w/2,-m.h/2,m.w,m.h,5);ctx.fill();ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle=isH?'rgba(255,210,120,0.7)':'rgba(220,160,255,0.7)';
+    ctx.font='9px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(isH?'↔':'↕',0,0);
+    ctx.restore();
+  });
+
+  // ── 공 ──
+  balls.forEach(b=>{
+    if(b.arrived)return;
+    // 트레일
+    b.trail.forEach((pt,ti)=>{
+      const alpha=(ti/b.trail.length)*0.26;
+      const r2=b.r*(ti/b.trail.length)*0.58;
+      if(r2<0.5)return;
+      ctx.beginPath();ctx.arc(pt.x,pt.y,r2,0,Math.PI*2);
+      ctx.fillStyle=b.color+Math.floor(alpha*255).toString(16).padStart(2,'0');
+      ctx.fill();
+    });
+    ctx.save();
+    if(b.skillActive){ctx.shadowColor='#c864ff';ctx.shadowBlur=20+Math.sin(Date.now()/70)*7;}
+    else if(b.hitFlash>0){ctx.shadowColor=b.color;ctx.shadowBlur=12;}
+    const g=ctx.createRadialGradient(b.x-b.r*.32,b.y-b.r*.32,1,b.x,b.y,b.r);
+    g.addColorStop(0,'rgba(255,255,255,0.95)');g.addColorStop(0.28,b.color);g.addColorStop(1,b.color+'99');
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.22)';ctx.lineWidth=1;ctx.stroke();
+    // 공 위 하이라이트 (회전 반영)
+    ctx.save();
+    ctx.translate(b.x,b.y);
+    ctx.rotate(b.angle||0);
+    // 회전하는 하이라이트 점
+    ctx.beginPath();ctx.arc(-b.r*.3,-b.r*.33,b.r*.26,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.52)';ctx.fill();
+    // 회전 무늬 선
+    ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-b.r*.7,0);ctx.lineTo(b.r*.7,0);ctx.stroke();
+    ctx.restore();
+    ctx.shadowBlur=0;
+    // 이름/번호 텍스트 — 공과 함께 회전
+    ctx.save();
+    ctx.translate(b.x,b.y);
+    ctx.rotate(b.angle||0);
+    ctx.fillStyle='rgba(0,0,0,0.82)';ctx.font=`bold 8px "Noto Sans KR"`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(b.name.length>4?b.name.slice(0,3)+'…':b.name,0,0);
+    if(b.skillActive){ctx.font='9px serif';ctx.fillText('⚡',b.r*.72,-b.r*.68);}
+    else if(b.skillReady){ctx.font='8px serif';ctx.fillText('💥',b.r*.7,-b.r*.7);}
+    ctx.restore();
+    ctx.restore();
+  });
+
+  // 이펙트
+  impacts.forEach(p=>{ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fillStyle=p.col;ctx.fill();});
+  ctx.globalAlpha=1;
+
+  ctx.restore(); // 카메라 끝
+
+  // ── HUD ──
+  drawHUD();
+}
+
+function drawHUD(){
+  // 상단 진행 바
+  const prog=arrived.length/Math.max(1,balls.length);
+  ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fillRect(0,0,VW,4);
+  if(prog>0){
+    const pg=ctx.createLinearGradient(0,0,VW*prog,0);
+    pg.addColorStop(0,'#00e5ff');pg.addColorStop(1,'#f5c518');
+    ctx.fillStyle=pg;ctx.fillRect(0,0,VW*prog,4);
+  }
+  // 미니맵
+  const mmW=56,mmH=90,mmX=VW-mmW-8,mmY=VH-mmH-8;
+  ctx.fillStyle='rgba(0,0,0,0.52)';ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(mmX,mmY,mmW,mmH,6);ctx.fill();ctx.stroke();
+  const mmFY=mmY+mmH-5;
+  ctx.strokeStyle='rgba(245,197,24,0.55)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(mmX,mmFY);ctx.lineTo(mmX+mmW,mmFY);ctx.stroke();
+  balls.filter(b=>!b.arrived).forEach(b=>{
+    const rx=mmX+(b.x/TRACK_W)*mmW;
+    const ry=mmY+(b.y/WORLD_H)*mmH;
+    ctx.beginPath();ctx.arc(rx,ry,2.2,0,Math.PI*2);ctx.fillStyle=b.color;ctx.fill();
+  });
+  const ct=mmY+(camY/WORLD_H)*mmH;
+  const cb=mmY+((camY+VH)/WORLD_H)*mmH;
+  ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+  ctx.beginPath();ctx.roundRect(mmX,ct,mmW,Math.max(2,cb-ct),2);ctx.stroke();ctx.setLineDash([]);
+}
+
+// ═══ 순위 패널 ════════════════════════════════════════
+function updateRankPanel(){
+  const alive=balls.filter(b=>!b.arrived).sort((a,b2)=>b2.y-a.y);
+  const sorted=[...arrived,...alive];
+  document.getElementById('rankList').innerHTML=sorted.map((b,i)=>{
+    const r=b.rank||(arrived.length+i-arrived.length+1);
+    const sym=b.rank===1?'🥇':b.rank===2?'🥈':b.rank===3?'🥉':`${b.rank||'·'}`;
+    const isP=usePass&&b.rank&&b.rank<=passN;
+    const isLead=!b.arrived&&b===alive[0];
+    return `<div class="ri ${b.arrived?'done':''} ${isLead?'leading':''}">
+      <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;min-width:24px;color:${b.color}">${b.arrived?sym:isLead?'🏃':'·'}</div>
+      <div style="flex:1;font-size:10px">${b.name}${b.skillActive?' ⚡':b.skillReady?' 💥':''}</div>
+      ${usePass&&b.arrived?`<div style="font-size:9px;padding:1px 5px;border-radius:5px;background:${isP?'rgba(0,230,118,.18)':'rgba(255,77,77,.18)'};color:${isP?'#00e676':'#ff4d4d'}">${isP?'합격':'탈락'}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function addLog(msg,type=''){
+  const el=document.createElement('div');el.className='log'+(type?' '+type:'');el.textContent=msg;
+  const log=document.getElementById('evtLog');log.prepend(el);if(log.children.length>80)log.removeChild(log.lastChild);
+}
+
+function showResult(){
+  document.getElementById('resItems').innerHTML=arrived.map((b,i)=>{
+    const r=i+1,sym=r===1?'🥇':r===2?'🥈':r===3?'🥉':`${r}위`,isP=usePass&&r<=passN;
+    return `<div class="res-item" style="animation-delay:${i*.06}s;border-left:4px solid ${b.color}">
+      <div style="font-family:'Oswald',sans-serif;font-size:17px;min-width:32px;color:${b.color}">${sym}</div>
+      <div style="flex:1;font-family:'Black Han Sans',sans-serif;font-size:14px">${b.name}</div>
+      ${usePass?`<div style="font-size:10px;padding:2px 7px;border-radius:8px;background:${isP?'rgba(0,230,118,.18)':'rgba(255,77,77,.18)'};color:${isP?'#00e676':'#ff4d4d'}">${isP?'✅합격':'❌탈락'}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('resOv').classList.add('show');
+}
+
+// ═══ 메인 루프 ════════════════════════════════════════
+let spdAccum=0;
+function loop(){
+  const spd=parseFloat(document.getElementById('spd').value);
+  document.getElementById('spdLabel').textContent=spd.toFixed(2).replace(/\.?0+$/,'')+'x';
+  if(spd>=1){
+    // 1배속 이상: 정수번 스텝 실행
+    const steps=Math.round(spd);
+    for(let s=0;s<steps;s++){tick++;updateMovers();physicsStep();}
+  } else {
+    // 1배속 미만: 프레임 누적 방식
+    spdAccum+=spd;
+    if(spdAccum>=1){spdAccum-=1;tick++;updateMovers();physicsStep();}
+  }
+  updateCamera();draw();updateRankPanel();
+  document.getElementById('statusMsg').textContent=`🏁 ${arrived.length}/${balls.length}개 도착`;
+  if(arrived.length===balls.length&&!finished){finished=true;setTimeout(showResult,700);return;}
+  requestAnimationFrame(loop);
+}
+
+// ═══ 시작 & 크기 연동 ════════════════════════════════
+document.getElementById('sizeSelectSide').addEventListener('change',function(){
+  document.getElementById('sizeSelect').value=this.value;
+});
+document.getElementById('sizeSelect').addEventListener('change',function(){
+  document.getElementById('sizeSelectSide').value=this.value;
+});
+
+function startGame(){
+  document.getElementById('startOv').style.display='none';
+  // 사운드 컨텍스트 초기화 (사용자 제스처 필요)
+  try{ getAudio(); }catch(e){}
+  resizeCanvas();buildWorld();spawnBalls();updateRankPanel();
+  addLog('🎱 공굴리기 시작!','sp');
+  running=true;camY=0;
+  requestAnimationFrame(loop);
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+</script>
+</body>
+</html>

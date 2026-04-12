@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎲 RANDOM ARENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&family=Oswald:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06060f;--surface:#0f0f1e;--surface2:#181830;
+  --accent:#f5c518;--accent2:#ff4d4d;--accent3:#00e5ff;
+  --text:#f0f0f0;--muted:#777;--border:rgba(255,255,255,0.07);
+  --gold:linear-gradient(135deg,#f5c518,#ff9500,#f5c518);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* 배경 파티클 */
+.bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* 상단 광고 */
+.ad-top{background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);border-bottom:1px solid var(--border);height:90px;display:flex;align-items:center;justify-content:center;position:relative;z-index:10;}
+.ad-top-label{position:absolute;top:6px;left:12px;font-size:9px;color:#444;letter-spacing:3px;text-transform:uppercase;}
+.ad-top-inner{text-align:center;font-size:13px;color:var(--muted);}
+.ad-top-inner strong{color:var(--accent);}
+
+/* 사이드 광고 */
+.ad-side{position:fixed;top:50%;transform:translateY(-50%);width:130px;background:linear-gradient(180deg,#0f0f1e,#141428);border:1px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;}
+.ad-side.left{left:6px;}.ad-side.right{right:6px;}
+.ad-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
+.ad-mock{width:110px;height:220px;background:rgba(255,255,255,0.02);border:1px dashed #2a2a2a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#333;text-align:center;}
+
+/* 헤더 */
+header{position:relative;z-index:10;padding:28px 160px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.logo{font-family:'Oswald',sans-serif;font-size:32px;font-weight:900;letter-spacing:4px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo em{-webkit-text-fill-color:var(--accent2);font-style:normal;}
+.header-sub{font-size:13px;color:var(--muted);}
+
+/* 히어로 */
+.hero{position:relative;z-index:10;text-align:center;padding:60px 160px 40px;}
+.hero-title{font-family:'Black Han Sans',sans-serif;font-size:52px;letter-spacing:3px;line-height:1.2;margin-bottom:16px;}
+.hero-title span{background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-sub{font-size:16px;color:var(--muted);margin-bottom:40px;}
+
+/* 참가자 입력 카드 */
+.input-card{position:relative;z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:700px;margin:0 auto 40px;}
+.input-card-title{font-family:'Black Han Sans',sans-serif;font-size:16px;letter-spacing:2px;color:var(--accent);margin-bottom:16px;}
+.input-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.itab{flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;text-align:center;font-family:'Noto Sans KR',sans-serif;}
+.itab.active{background:rgba(245,197,24,.15);border-color:var(--accent);color:var(--accent);}
+textarea,input[type=number],input[type=text]{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;outline:none;transition:border .2s;}
+textarea:focus,input:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:100px;}
+.hint{font-size:11px;color:#444;margin-top:4px;}
+.name-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-height:120px;overflow-y:auto;}
+.ntag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:13px;}
+.file-zone{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;color:var(--muted);font-size:13px;transition:border .2s;}
+.file-zone:hover{border-color:var(--accent);color:var(--accent);}
+.pass-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.pass-row label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;}
+.pass-row input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;}
+.pass-row input[type=number]{width:80px;}
+.dl-btn{background:none;border:1px dashed #444;color:var(--accent3);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;width:100%;margin-top:8px;font-family:'Noto Sans KR',sans-serif;}
+.dl-btn:hover{border-color:var(--accent3);}
+
+/* 테마 카드 그리드 */
+.themes-grid{position:relative;z-index:10;display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;margin:0 auto;padding:0 160px 60px;}
+.theme-card{background:var(--surface);border:2px solid var(--border);border-radius:20px;padding:32px 24px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+.theme-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.theme-card:hover{transform:translateY(-4px);}
+.theme-card:hover::before{opacity:1;}
+.tc-ball::before{background:radial-gradient(ellipse at top,rgba(0,229,255,.08),transparent);}
+.tc-horse::before{background:radial-gradient(ellipse at top,rgba(100,200,50,.08),transparent);}
+.tc-battle::before{background:radial-gradient(ellipse at top,rgba(255,77,77,.08),transparent);}
+.tc-colosseum::before{background:radial-gradient(ellipse at top,rgba(245,197,24,.08),transparent);}
+.tc-roulette::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
+.tc-icon{font-size:48px;margin-bottom:12px;}
+.tc-title{font-family:'Black Han Sans',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:8px;}
+.tc-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.tc-badge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:20px;margin-top:10px;letter-spacing:1px;font-weight:700;}
+.badge-blue{background:rgba(0,229,255,.15);color:var(--accent3);}
+.badge-green{background:rgba(100,200,50,.15);color:#64c832;}
+.badge-red{background:rgba(255,77,77,.15);color:var(--accent2);}
+.badge-gold{background:rgba(245,197,24,.15);color:var(--accent);}
+.badge-purple{background:rgba(200,100,255,.15);color:#c864ff;}
+
+.theme-card-border-ball{border-color:rgba(0,229,255,.3);}
+.theme-card-border-ball:hover{border-color:var(--accent3);box-shadow:0 0 30px rgba(0,229,255,.15);}
+.theme-card-border-horse{border-color:rgba(100,200,50,.3);}
+.theme-card-border-horse:hover{border-color:#64c832;box-shadow:0 0 30px rgba(100,200,50,.15);}
+.theme-card-border-battle{border-color:rgba(255,77,77,.3);}
+.theme-card-border-battle:hover{border-color:var(--accent2);box-shadow:0 0 30px rgba(255,77,77,.15);}
+.theme-card-border-colosseum{border-color:rgba(245,197,24,.3);}
+.theme-card-border-colosseum:hover{border-color:var(--accent);box-shadow:0 0 30px rgba(245,197,24,.15);}
+.theme-card-border-roulette{border-color:rgba(200,100,255,.3);}
+.theme-card-border-roulette:hover{border-color:#c864ff;box-shadow:0 0 30px rgba(200,100,255,.15);}
+
+/* 팀 나누기 */
+.team-section{max-width:700px;margin:0 auto 40px;position:relative;z-index:10;}
+.section-label{font-family:'Black Han Sans',sans-serif;font-size:14px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;}
+.team-toggle{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.toggle-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 20px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;font-family:'Noto Sans KR',sans-serif;}
+.toggle-btn.active{background:rgba(245,197,24,.15);border-color:var(--accent);color:var(--accent);}
+.team-setup{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;display:none;}
+.team-setup.open{display:block;}
+.team-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.team-row{display:flex;gap:8px;align-items:center;}
+.team-row input[type=color]{width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;padding:2px;background:none;}
+.team-row input[type=text]{flex:2;}
+.team-row input[type=number]{flex:1;width:60px;}
+.team-row .del-t{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;}
+.team-row .del-t:hover{color:var(--accent2);}
+.add-team-btn{background:none;border:1px dashed #333;color:var(--muted);padding:8px;border-radius:8px;cursor:pointer;font-size:13px;width:100%;font-family:'Noto Sans KR',sans-serif;}
+.add-team-btn:hover{border-color:#666;color:var(--text);}
+.team-start-btn{width:100%;padding:14px;border-radius:12px;border:none;background:var(--gold);color:#000;font-family:'Black Han Sans',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;margin-top:16px;transition:all .2s;}
+.team-start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,197,24,.4);}
+
+/* 팀 결과 모달 */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:700px;width:100%;max-height:80vh;overflow-y:auto;}
+.modal-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:900;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px;text-align:center;}
+.team-result-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;}
+.team-card{background:var(--surface2);border-radius:12px;padding:16px 20px;min-width:140px;border-top:4px solid;}
+.team-card-name{font-family:'Black Han Sans',sans-serif;font-size:15px;margin-bottom:10px;}
+.team-card-member{font-size:14px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);}
+.team-card-member:last-child{border:none;}
+.modal-close{margin-top:20px;width:100%;background:none;border:1px solid var(--border);color:var(--muted);padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-family:'Noto Sans KR',sans-serif;}
+.modal-close:hover{color:var(--text);border-color:#666;}
+
+/* 하단 광고 */
+.ad-bottom{background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);border-top:1px solid var(--border);height:90px;display:flex;align-items:center;justify-content:center;position:relative;z-index:10;}
+
+@media(max-width:1400px){.ad-side{display:none;}header,.hero,footer{padding-left:24px;padding-right:24px;}.themes-grid{padding-left:24px;padding-right:24px;}}
+@media(max-width:700px){.themes-grid{grid-template-columns:1fr;}.hero-title{font-size:36px;}}
+</style>
+</head>
+<body>
+<canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+<!-- 광고: 상단 -->
+<div class="ad-top">
+  <div class="ad-top-label">advertisement</div>
+  <div class="ad-top-inner">🎯 <strong>RANDOM ARENA</strong> &nbsp;—&nbsp; 여기에 광고를 게재하세요 &nbsp;|&nbsp; Google AdSense / 카카오 애드핏 연동 가능</div>
+</div>
+
+<!-- 광고: 사이드 -->
+<div class="ad-side left"><div class="ad-side-label">AD</div><div class="ad-mock">광고<br>영역<br>120×240</div></div>
+<div class="ad-side right"><div class="ad-side-label">AD</div><div class="ad-mock">광고<br>영역<br>120×240</div></div>
+
+<header>
+  <div class="logo">RANDOM<em>ARENA</em></div>
+  <div class="header-sub">🎲 공정한 무작위 추첨 플랫폼</div>
+</header>
+
+<div class="hero">
+  <div class="hero-title">무작위 추첨,<br><span>이렇게나 재밌을 줄이야</span></div>
+  <div class="hero-sub">경마, 배틀로얄, 콜로세움, 공굴리기, 룰렛 — 5가지 테마로 즐기는 추첨</div>
+</div>
+
+<!-- 참가자 입력 -->
+<div class="input-card" style="max-width:700px;margin:0 auto 24px;padding:28px;">
+  <div class="input-card-title">👥 참가자 설정</div>
+  <div class="input-tabs">
+    <div class="itab active" onclick="setIM('name',this)">이름 입력</div>
+    <div class="itab" onclick="setIM('num',this)">인원수만</div>
+    <div class="itab" onclick="setIM('file',this)">파일 업로드</div>
+  </div>
+  <div id="im-name">
+    <textarea id="namesTA" placeholder="이름을 입력하세요 (쉼표 또는 줄바꿈으로 구분)&#10;예) 김철수, 이영희, 박민준" oninput="previewNames()"></textarea>
+    <div class="name-tags" id="nameTags"></div>
+  </div>
+  <div id="im-num" style="display:none">
+    <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px;">총 인원수</label>
+    <input type="number" id="totalNum" min="2" max="200" value="10">
+    <p class="hint">1번~N번으로 표시됩니다</p>
+  </div>
+  <div id="im-file" style="display:none">
+    <div class="file-zone" onclick="document.getElementById('fileIn').click()">
+      📂 클릭하거나 파일을 드래그 (.txt, .csv)
+      <input type="file" id="fileIn" accept=".txt,.csv" style="display:none" onchange="loadFile(event)">
+    </div>
+    <div class="name-tags" id="fileNameTags"></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:6px;">📋 이름 목록 파일 만들기</p>
+    <textarea id="makeTA" placeholder="한 줄에 한 명씩 입력" style="min-height:70px;"></textarea>
+    <button class="dl-btn" onclick="dlFile()">⬇️ 이름 목록 파일 다운로드 (.csv)</button>
+  </div>
+
+  <div class="pass-row">
+    <label><input type="checkbox" id="usePass" onchange="togglePass()"> 합격/탈락 구분 사용</label>
+    <div id="passDetail" style="display:none;display:flex;gap:6px;align-items:center">
+      <span style="font-size:13px;color:var(--muted);">합격</span>
+      <input type="number" id="passN" min="1" value="3" style="width:60px">
+      <span style="font-size:13px;color:var(--muted);">명</span>
+    </div>
+  </div>
+</div>
+
+<!-- 테마 카드 -->
+<div class="themes-grid" style="max-width:900px;margin:0 auto;">
+  <div class="theme-card tc-ball theme-card-border-ball" onclick="go('ball')">
+    <div class="tc-icon">🎱</div>
+    <div class="tc-title" style="color:var(--accent3)">공굴리기</div>
+    <div class="tc-desc">핀볼처럼 공이 장애물을 튕기며 내려와 먼저 도착한 순으로 순위 결정! 필살기 발동 시 극적인 역전 가능</div>
+    <div class="tc-badge badge-blue">장애물 물리</div>
+  </div>
+  <div class="theme-card tc-horse theme-card-border-horse" onclick="go('horse')">
+    <div class="tc-icon">🏇</div>
+    <div class="tc-title" style="color:#64c832">경마</div>
+    <div class="tc-desc">트랙을 달리는 말들! 중간 이벤트(화장실 퇴장·뒷발차기·낮잠), 필살기로 극적 역전 연출</div>
+    <div class="tc-badge badge-green">이벤트 + 사운드</div>
+  </div>
+  <div class="theme-card tc-battle theme-card-border-battle" onclick="go('battle')">
+    <div class="tc-icon">⚔️</div>
+    <div class="tc-title" style="color:var(--accent2)">배틀로얄</div>
+    <div class="tc-desc">산악 지형 낙하산 강하! 파밍, 총기·근접무기 전투, 보급품 드랍, 변칙 이벤트로 생존자 결정</div>
+    <div class="tc-badge badge-red">오픈월드 생존</div>
+  </div>
+  <div class="theme-card tc-colosseum theme-card-border-colosseum" onclick="go('colosseum')">
+    <div class="tc-icon">🏟️</div>
+    <div class="tc-title" style="color:var(--accent)">콜로세움</div>
+    <div class="tc-desc">턴제 1대1 대결! 창·롱소드·레이피어·도끼·방패 조합으로 전략적 토너먼트 진행</div>
+    <div class="tc-badge badge-gold">턴제 전투</div>
+  </div>
+  <div class="theme-card tc-roulette theme-card-border-roulette" onclick="go('roulette')" style="grid-column:span 2;">
+    <div class="tc-icon">🎡</div>
+    <div class="tc-title" style="color:#c864ff">룰렛</div>
+    <div class="tc-desc">화려한 룰렛 바퀴를 직접 돌려 한 명씩 뽑기! 스핀할수록 줄어드는 참가자로 순위 결정</div>
+    <div class="tc-badge badge-purple">수동 스핀</div>
+  </div>
+</div>
+
+<!-- 팀 나누기 -->
+<div class="team-section" style="padding:0 160px;">
+  <div class="section-label">👥 팀 나누기</div>
+  <div class="team-toggle">
+    <button class="toggle-btn active" onclick="toggleTeamPanel(this)">팀 설정 열기 / 닫기</button>
+  </div>
+  <div class="team-setup open" id="teamSetup">
+    <div class="team-rows" id="teamRows"></div>
+    <button class="add-team-btn" onclick="addTeam()">+ 팀 추가</button>
+    <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;">
+      <input type="checkbox" id="useLimit" style="width:auto;accent-color:var(--accent);"> 팀별 최대 인원 설정 사용 (초과 인원은 균등 배분)
+    </label>
+    <button class="team-start-btn" onclick="startTeam()">👥 팀 나누기 시작!</button>
+  </div>
+</div>
+
+<!-- 광고: 하단 -->
+<div class="ad-bottom" style="margin-top:60px;">
+  <div style="font-size:13px;color:var(--muted);">🎯 광고 문의: your@email.com &nbsp;|&nbsp; Google AdSense 연동 가능</div>
+</div>
+
+<!-- 팀 결과 모달 -->
+<div class="modal-overlay" id="teamModal">
+  <div class="modal">
+    <div class="modal-title">👥 팀 배정 결과!</div>
+    <div class="team-result-grid" id="teamResultGrid"></div>
+    <button class="modal-close" onclick="document.getElementById('teamModal').classList.remove('open')">✕ 닫기</button>
+  </div>
+</div>
+
+<script>
+const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
+let inputMode='name', teams=[], fileNames=[];
+
+// 배경 파티클
+const bgCanvas=document.getElementById('bgCanvas');
+const bctx=bgCanvas.getContext('2d');
+bgCanvas.width=window.innerWidth; bgCanvas.height=window.innerHeight;
+window.addEventListener('resize',()=>{bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;});
+const stars=Array.from({length:80},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:Math.random()*1.5+.3,speed:Math.random()*.3+.1,opacity:Math.random()}));
+function drawBg(){bctx.clearRect(0,0,bgCanvas.width,bgCanvas.height);stars.forEach(s=>{s.y-=s.speed;if(s.y<0)s.y=bgCanvas.height;s.opacity+=.01;if(s.opacity>1)s.opacity=0;bctx.beginPath();bctx.arc(s.x,s.y,s.r,0,Math.PI*2);bctx.fillStyle=`rgba(200,200,255,${s.opacity*.4})`;bctx.fill();});requestAnimationFrame(drawBg);}
+drawBg();
+
+// 입력 모드
+function setIM(m,el){
+  inputMode=m;
+  ['name','num','file'].forEach(x=>document.getElementById(`im-${x}`).style.display=x===m?'block':'none');
+  document.querySelectorAll('.itab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// 이름 파싱
+function parseNames(raw){return raw.split(/[\n,，、]+/).map(s=>s.trim()).filter(s=>s);}
+function previewNames(){
+  const names=parseNames(document.getElementById('namesTA').value);
+  document.getElementById('nameTags').innerHTML=names.map(n=>`<div class="ntag">${n}</div>`).join('');
+}
+function loadFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{fileNames=parseNames(ev.target.result);document.getElementById('fileNameTags').innerHTML=fileNames.map(n=>`<div class="ntag">${n}</div>`).join('');};
+  r.readAsText(f,'UTF-8');
+}
+function dlFile(){
+  const names=parseNames(document.getElementById('makeTA').value);if(!names.length)return;
+  const blob=new Blob(['\uFEFF'+names.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='participants.csv';a.click();
+}
+function togglePass(){
+  document.getElementById('passDetail').style.display=document.getElementById('usePass').checked?'flex':'none';
+}
+
+// 참가자 수집
+function getParticipants(){
+  if(inputMode==='name') return parseNames(document.getElementById('namesTA').value);
+  if(inputMode==='num'){const n=parseInt(document.getElementById('totalNum').value)||0;return Array.from({length:n},(_,i)=>`${i+1}번`);}
+  if(inputMode==='file') return fileNames;
+  return [];
+}
+function getConfig(){
+  return {
+    usePass:document.getElementById('usePass').checked,
+    passN:parseInt(document.getElementById('passN').value)||3
+  };
+}
+
+// 테마 이동
+function go(theme){
+  const p=getParticipants();
+  if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
+  const cfg=getConfig();
+  const params=new URLSearchParams({names:p.join(','),usePass:cfg.usePass,passN:cfg.passN});
+  window.open(`${theme}.html?${params.toString()}`, '_blank');
+}
+
+// 팀 나누기
+function initTeams(){teams=[{name:'A팀',color:COLORS[0],max:''},{name:'B팀',color:COLORS[1],max:''}];renderTeams();}
+function addTeam(){if(teams.length>=10)return;teams.push({name:`${String.fromCharCode(65+teams.length)}팀`,color:COLORS[teams.length%COLORS.length],max:''});renderTeams();}
+function delTeam(i){if(teams.length<=2)return;teams.splice(i,1);renderTeams();}
+function renderTeams(){
+  document.getElementById('teamRows').innerHTML=teams.map((t,i)=>`
+    <div class="team-row">
+      <input type="color" value="${t.color}" onchange="teams[${i}].color=this.value" class="team-row" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;padding:2px;">
+      <input type="text" value="${t.name}" placeholder="팀 이름" onchange="teams[${i}].name=this.value" style="flex:2;">
+      <input type="number" min="1" max="100" value="${t.max||''}" placeholder="최대" title="최대 인원" style="flex:1;max-width:70px;" onchange="teams[${i}].max=this.value">
+      <button class="del-t" onclick="delTeam(${i})">✕</button>
+    </div>`).join('');
+}
+function toggleTeamPanel(el){
+  const setup=document.getElementById('teamSetup');
+  setup.classList.toggle('open');
+  el.classList.toggle('active');
+}
+function startTeam(){
+  const p=getParticipants();
+  if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
+  const shuffled=shuffle([...p]);
+  const useLimit=document.getElementById('useLimit').checked;
+  const result=teams.map(t=>({...t,members:[]}));
+  if(useLimit){
+    let pool=[...shuffled];
+    result.forEach(t=>{const max=parseInt(t.max)||Infinity;const take=Math.min(max,pool.length);t.members=pool.splice(0,take);});
+    while(pool.length>0){const min=result.reduce((a,b)=>a.members.length<=b.members.length?a:b);min.members.push(pool.shift());}
+  } else {
+    shuffled.forEach((n,i)=>result[i%result.length].members.push(n));
+  }
+  const grid=document.getElementById('teamResultGrid');
+  grid.innerHTML=result.map(t=>`
+    <div class="team-card" style="border-color:${t.color}">
+      <div class="team-card-name" style="color:${t.color}">${t.name} (${t.members.length}명)</div>
+      ${t.members.map(m=>`<div class="team-card-member">👤 ${m}</div>`).join('')}
+    </div>`).join('');
+  document.getElementById('teamModal').classList.add('open');
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+initTeams();
+</script>
+</body>
+</html>
