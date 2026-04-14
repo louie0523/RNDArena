@@ -15,57 +15,102 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;overflow-x:hidden;}
 
-/* 배경 파티클 */
 .bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
 
-/* 상단 광고 */
-.ad-top{background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);border-bottom:1px solid var(--border);height:90px;display:flex;align-items:center;justify-content:center;position:relative;z-index:10;}
+/* ───── 광고: 상단 ───── */
+.ad-top{
+  background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);
+  border-bottom:1px solid var(--border);
+  height:90px;display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:10;
+}
 .ad-top-label{position:absolute;top:6px;left:12px;font-size:9px;color:#444;letter-spacing:3px;text-transform:uppercase;}
-.ad-top-inner{text-align:center;font-size:13px;color:var(--muted);}
-.ad-top-inner strong{color:var(--accent);}
 
-/* 사이드 광고 */
-.ad-side{position:fixed;top:50%;transform:translateY(-50%);width:160px;background:linear-gradient(180deg,#0f0f1e,#141428);border:1px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;}
+/* ───── 광고: 사이드 고정 ───── */
+.ad-side{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:160px;
+  background:linear-gradient(180deg,#0f0f1e,#141428);
+  border:1px solid var(--border);border-radius:12px;
+  padding:12px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  z-index:50;
+}
 .ad-side.left{left:6px;}.ad-side.right{right:6px;}
 .ad-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
-.ad-mock{width:110px;height:220px;background:rgba(255,255,255,0.02);border:1px dashed #2a2a2a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#333;text-align:center;}
 
-/* 헤더 */
-header{position:relative;z-index:10;padding:28px 160px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+/* ───── 헤더 ───── */
+header{
+  position:relative;z-index:10;
+  padding:20px 200px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
 .logo{font-family:'Oswald',sans-serif;font-size:32px;font-weight:900;letter-spacing:4px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .logo em{-webkit-text-fill-color:var(--accent2);font-style:normal;}
 .header-sub{font-size:13px;color:var(--muted);}
 
-/* 히어로 */
-.hero{position:relative;z-index:10;text-align:center;padding:60px 160px 40px;}
+/* ───── 히어로 ───── */
+.hero{position:relative;z-index:10;text-align:center;padding:60px 200px 40px;}
 .hero-title{font-family:'Black Han Sans',sans-serif;font-size:52px;letter-spacing:3px;line-height:1.2;margin-bottom:16px;}
 .hero-title span{background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .hero-sub{font-size:16px;color:var(--muted);margin-bottom:40px;}
 
-/* 참가자 입력 카드 */
-.input-card{position:relative;z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:700px;margin:0 auto 40px;}
+/* ───── 참가자 입력 ───── */
+.input-card{
+  position:relative;z-index:10;
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px;max-width:700px;margin:0 auto 24px;
+}
 .input-card-title{font-family:'Black Han Sans',sans-serif;font-size:16px;letter-spacing:2px;color:var(--accent);margin-bottom:16px;}
 .input-tabs{display:flex;gap:8px;margin-bottom:16px;}
-.itab{flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;text-align:center;font-family:'Noto Sans KR',sans-serif;}
+.itab{
+  flex:1;padding:8px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;
+  text-align:center;font-family:'Noto Sans KR',sans-serif;
+}
 .itab.active{background:rgba(245,197,24,.15);border-color:var(--accent);color:var(--accent);}
-textarea,input[type=number],input[type=text]{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;outline:none;transition:border .2s;}
+textarea,input[type=number],input[type=text]{
+  width:100%;padding:10px 14px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;
+  outline:none;transition:border .2s;
+}
 textarea:focus,input:focus{border-color:var(--accent);}
 textarea{resize:vertical;min-height:100px;}
 .hint{font-size:11px;color:#444;margin-top:4px;}
 .name-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-height:120px;overflow-y:auto;}
 .ntag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:13px;}
-.file-zone{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;color:var(--muted);font-size:13px;transition:border .2s;}
+.file-zone{
+  border:2px dashed var(--border);border-radius:8px;padding:20px;
+  text-align:center;cursor:pointer;color:var(--muted);font-size:13px;transition:border .2s;
+}
 .file-zone:hover{border-color:var(--accent);color:var(--accent);}
 .pass-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
 .pass-row label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;}
 .pass-row input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;}
 .pass-row input[type=number]{width:80px;}
-.dl-btn{background:none;border:1px dashed #444;color:var(--accent3);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;width:100%;margin-top:8px;font-family:'Noto Sans KR',sans-serif;}
+#passDetail{display:none;gap:6px;align-items:center;}
+#passDetail.show{display:flex;}
+.dl-btn{
+  background:none;border:1px dashed #444;color:var(--accent3);
+  padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;
+  width:100%;margin-top:8px;font-family:'Noto Sans KR',sans-serif;
+}
 .dl-btn:hover{border-color:var(--accent3);}
 
-/* 테마 카드 그리드 */
-.themes-grid{position:relative;z-index:10;display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;margin:0 auto;padding:0 160px 60px;}
-.theme-card{background:var(--surface);border:2px solid var(--border);border-radius:20px;padding:32px 24px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+/* ───── 테마 카드 그리드 ───── */
+.themes-grid{
+  position:relative;z-index:10;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:20px;
+  max-width:900px;margin:0 auto;padding:0 200px 60px;
+}
+.theme-card{
+  background:var(--surface);border:2px solid var(--border);border-radius:20px;
+  padding:32px 24px;cursor:pointer;transition:all .3s;
+  position:relative;overflow:hidden;
+}
 .theme-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
 .theme-card:hover{transform:translateY(-4px);}
 .theme-card:hover::before{opacity:1;}
@@ -95,48 +140,208 @@ textarea{resize:vertical;min-height:100px;}
 .theme-card-border-roulette{border-color:rgba(200,100,255,.3);}
 .theme-card-border-roulette:hover{border-color:#c864ff;box-shadow:0 0 30px rgba(200,100,255,.15);}
 
-/* 팀 나누기 */
-.team-section{max-width:700px;margin:0 auto 40px;position:relative;z-index:10;}
+/* ───── 팀 나누기 ───── */
+.team-section{max-width:700px;margin:0 auto 40px;position:relative;z-index:10;padding:0 200px;}
 .section-label{font-family:'Black Han Sans',sans-serif;font-size:14px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;}
 .team-toggle{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-.toggle-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 20px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;font-family:'Noto Sans KR',sans-serif;}
+.toggle-btn{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:8px 20px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;
+  font-family:'Noto Sans KR',sans-serif;
+}
 .toggle-btn.active{background:rgba(245,197,24,.15);border-color:var(--accent);color:var(--accent);}
 .team-setup{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;display:none;}
 .team-setup.open{display:block;}
 .team-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
 .team-row{display:flex;gap:8px;align-items:center;}
-.team-row input[type=color]{width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;padding:2px;background:none;}
-.team-row input[type=text]{flex:2;}
-.team-row input[type=number]{flex:1;width:60px;}
-.team-row .del-t{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;}
+.team-row input[type=color]{width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;padding:2px;background:none;flex-shrink:0;}
+.team-row input[type=text]{flex:2;min-width:0;}
+.team-row input[type=number]{flex:1;max-width:70px;min-width:0;}
+.team-row .del-t{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;flex-shrink:0;}
 .team-row .del-t:hover{color:var(--accent2);}
-.add-team-btn{background:none;border:1px dashed #333;color:var(--muted);padding:8px;border-radius:8px;cursor:pointer;font-size:13px;width:100%;font-family:'Noto Sans KR',sans-serif;}
+.add-team-btn{
+  background:none;border:1px dashed #333;color:var(--muted);
+  padding:8px;border-radius:8px;cursor:pointer;font-size:13px;width:100%;
+  font-family:'Noto Sans KR',sans-serif;
+}
 .add-team-btn:hover{border-color:#666;color:var(--text);}
-.team-start-btn{width:100%;padding:14px;border-radius:12px;border:none;background:var(--gold);color:#000;font-family:'Black Han Sans',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;margin-top:16px;transition:all .2s;}
+.team-start-btn{
+  width:100%;padding:14px;border-radius:12px;border:none;
+  background:var(--gold);color:#000;
+  font-family:'Black Han Sans',sans-serif;font-size:18px;letter-spacing:2px;
+  cursor:pointer;margin-top:16px;transition:all .2s;
+}
 .team-start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,197,24,.4);}
 
-/* 팀 결과 모달 */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+/* ───── 모달 ───── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);
+  z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;
+}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:700px;width:100%;max-height:80vh;overflow-y:auto;}
-.modal-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:900;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px;text-align:center;}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:32px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;
+}
+.modal-title{
+  font-family:'Oswald',sans-serif;font-size:28px;font-weight:900;
+  background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:24px;text-align:center;
+}
 .team-result-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;}
 .team-card{background:var(--surface2);border-radius:12px;padding:16px 20px;min-width:140px;border-top:4px solid;}
 .team-card-name{font-family:'Black Han Sans',sans-serif;font-size:15px;margin-bottom:10px;}
 .team-card-member{font-size:14px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);}
 .team-card-member:last-child{border:none;}
-.modal-close{margin-top:20px;width:100%;background:none;border:1px solid var(--border);color:var(--muted);padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-family:'Noto Sans KR',sans-serif;}
+.modal-close{
+  margin-top:20px;width:100%;background:none;border:1px solid var(--border);
+  color:var(--muted);padding:12px;border-radius:8px;cursor:pointer;
+  font-size:14px;font-family:'Noto Sans KR',sans-serif;
+}
 .modal-close:hover{color:var(--text);border-color:#666;}
 
-/* 하단 광고 */
-.ad-bottom{background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);border-top:1px solid var(--border);border-bottom:1px solid var(--border);height:90px;display:flex;align-items:center;justify-content:center;position:relative;z-index:10;}
-/* 하단 사이드 광고 */
-.ad-bottom-sides{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 6px;position:relative;z-index:10;}
-.ad-bottom-side{background:linear-gradient(180deg,#0f0f1e,#141428);border:1px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;width:176px;}
-.ad-bottom-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
+/* ───── 하단 광고 ───── */
+.ad-bottom{
+  background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  height:90px;display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:10;
+}
 
-@media(max-width:1400px){.ad-side{display:none;}header,.hero,footer{padding-left:24px;padding-right:24px;}.themes-grid{padding-left:24px;padding-right:24px;}.ad-bottom-sides{display:none;}}
-@media(max-width:700px){.themes-grid{grid-template-columns:1fr;}.hero-title{font-size:36px;}}
+/* ───── 모바일용 하단 고정 광고 배너 ───── */
+.ad-mobile-bottom{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  height:60px;
+  background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);
+  border-top:1px solid var(--border);
+  align-items:center;justify-content:center;
+  z-index:200;
+}
+.ad-mobile-label{position:absolute;top:4px;left:8px;font-size:8px;color:#444;letter-spacing:2px;text-transform:uppercase;}
+
+/* ───── 푸터 ───── */
+footer{
+  border-top:1px solid var(--border);
+  padding:28px 200px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+  position:relative;z-index:10;
+}
+
+/* ═══════════════════════════════════════
+   반응형 브레이크포인트
+═══════════════════════════════════════ */
+
+/* ─ 1400px 이하: 사이드 광고 숨김 ─ */
+@media(max-width:1400px){
+  .ad-side{display:none;}
+  header{padding:20px 24px;}
+  .hero{padding:48px 24px 32px;}
+  .themes-grid{padding:0 24px 48px;}
+  .team-section{padding:0 24px;}
+  footer{padding:24px;}
+}
+
+/* ─ 900px 이하: 태블릿 ─ */
+@media(max-width:900px){
+  header{padding:16px 20px;}
+  .hero{padding:36px 20px 24px;}
+  .hero-title{font-size:40px;}
+  .themes-grid{padding:0 20px 40px;gap:16px;}
+  .tc-icon{font-size:40px;margin-bottom:10px;}
+  .tc-title{font-size:20px;}
+  .input-card{margin:0 20px 20px;}
+  .team-section{padding:0 20px !important;}
+  footer{padding:20px;}
+}
+
+/* ─ 600px 이하: 모바일 ─ */
+@media(max-width:600px){
+
+  /* 하단 고정 광고 표시 */
+  .ad-mobile-bottom{display:flex;}
+  /* 하단 고정 광고 높이만큼 body 패딩 */
+  body{padding-bottom:60px;}
+
+  /* 상단 광고 높이 줄이기 */
+  .ad-top{height:56px;}
+
+  /* 헤더 */
+  header{padding:12px 16px;}
+  .logo{font-size:22px;letter-spacing:2px;}
+  .header-sub{font-size:11px;}
+
+  /* 히어로 */
+  .hero{padding:24px 16px 18px;}
+  .hero-title{font-size:28px;letter-spacing:1px;}
+  .hero-sub{font-size:13px;margin-bottom:20px;}
+
+  /* 참가자 입력 */
+  .input-card{margin:0 12px 16px;padding:16px 14px;border-radius:12px;}
+  .input-card-title{font-size:14px;margin-bottom:12px;}
+  .input-tabs{gap:6px;margin-bottom:12px;}
+  .itab{font-size:12px;padding:8px 4px;border-radius:6px;}
+  textarea{min-height:80px;font-size:13px;}
+  input[type=number],input[type=text]{font-size:13px;}
+  .pass-row{gap:8px;}
+  .pass-row label{font-size:12px;}
+
+  /* 테마 카드 — 모바일: 2열 유지, 룰렛만 1열 span */
+  .themes-grid{
+    grid-template-columns:repeat(2,1fr);
+    padding:0 12px 32px;
+    gap:10px;
+  }
+  /* 룰렛 카드 — 모바일에서도 전체 폭 */
+  .themes-grid .tc-roulette-card{grid-column:span 2;}
+
+  .theme-card{padding:16px 12px;border-radius:14px;}
+  .tc-icon{font-size:30px;margin-bottom:6px;}
+  .tc-title{font-size:15px;letter-spacing:1px;margin-bottom:5px;}
+  .tc-desc{font-size:11px;line-height:1.5;color:#888;}
+  .tc-badge{font-size:9px;padding:2px 8px;margin-top:6px;}
+
+  /* 팀 나누기 */
+  .team-section{padding:0 12px !important;margin-bottom:28px;}
+  .section-label{font-size:12px;letter-spacing:2px;}
+  .team-setup{padding:16px 12px;}
+  .team-row{gap:6px;}
+  .team-row input[type=color]{width:32px;height:32px;}
+  .team-row .del-t{font-size:16px;}
+  .add-team-btn{font-size:12px;padding:7px;}
+  .team-start-btn{font-size:16px;padding:12px;}
+
+  /* 모달 */
+  .modal{padding:20px 16px;border-radius:16px;}
+  .modal-title{font-size:22px;margin-bottom:16px;}
+  .team-card{min-width:120px;padding:12px 14px;}
+  .team-card-name{font-size:13px;}
+  .team-card-member{font-size:12px;}
+
+  /* 하단 광고 */
+  .ad-bottom{height:56px;}
+
+  /* 푸터 */
+  footer{
+    padding:16px 12px 20px;
+    flex-direction:column;align-items:center;
+    text-align:center;gap:10px;
+  }
+  footer>div:first-child{font-size:16px;}
+  footer .footer-links{flex-direction:column;gap:8px;align-items:center;}
+  footer>div:last-child{font-size:11px;}
+}
+
+/* ─ 400px 이하: 소형 모바일 ─ */
+@media(max-width:400px){
+  .hero-title{font-size:24px;}
+  .themes-grid{gap:8px;}
+  .tc-icon{font-size:26px;}
+  .tc-title{font-size:14px;}
+  .tc-desc{display:none;}  /* 너무 좁으면 설명 숨김 */
+  .tc-badge{display:none;}
+}
 </style>
 </head>
 <body>
@@ -153,7 +358,7 @@ textarea{resize:vertical;min-height:100px;}
     src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 
-<!-- 광고: 사이드 (고정) -->
+<!-- 광고: 사이드 (데스크톱 고정) -->
 <div class="ad-side left">
   <div class="ad-side-label">advertisement</div>
   <ins class="kakao_ad_area" style="display:none;"
@@ -171,6 +376,16 @@ textarea{resize:vertical;min-height:100px;}
   <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 
+<!-- 광고: 모바일 하단 고정 배너 -->
+<div class="ad-mobile-bottom">
+  <div class="ad-mobile-label">advertisement</div>
+  <ins class="kakao_ad_area" style="display:none;"
+    data-ad-unit="DAN-PJse5rx0E3OW79XA"
+    data-ad-width="320"
+    data-ad-height="50"></ins>
+  <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+</div>
+
 <header>
   <div class="logo">RANDOM<em>ARENA</em></div>
   <div class="header-sub">🎲 깔롱한 무작위 추첨 플랫폼</div>
@@ -182,22 +397,25 @@ textarea{resize:vertical;min-height:100px;}
 </div>
 
 <!-- 참가자 입력 -->
-<div class="input-card" style="max-width:700px;margin:0 auto 24px;padding:28px;">
+<div class="input-card">
   <div class="input-card-title">👥 참가자 설정</div>
   <div class="input-tabs">
     <div class="itab active" onclick="setIM('name',this)">이름 입력</div>
     <div class="itab" onclick="setIM('num',this)">인원수만</div>
     <div class="itab" onclick="setIM('file',this)">파일 업로드</div>
   </div>
+
   <div id="im-name">
     <textarea id="namesTA" placeholder="이름을 입력하세요 (쉼표 또는 줄바꿈으로 구분)&#10;예) 김철수, 이영희, 박준우" oninput="previewNames()"></textarea>
     <div class="name-tags" id="nameTags"></div>
   </div>
+
   <div id="im-num" style="display:none">
     <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px;">총 인원수</label>
     <input type="number" id="totalNum" min="2" max="200" value="10">
     <p class="hint">1번~N번으로 표시됩니다</p>
   </div>
+
   <div id="im-file" style="display:none">
     <div class="file-zone" onclick="document.getElementById('fileIn').click()">
       📂 클릭하거나 파일을 드래그 (.txt, .csv)
@@ -212,7 +430,7 @@ textarea{resize:vertical;min-height:100px;}
 
   <div class="pass-row">
     <label><input type="checkbox" id="usePass" onchange="togglePass()"> 합격/탈락 구분 사용</label>
-    <div id="passDetail" style="display:none;display:flex;gap:6px;align-items:center">
+    <div id="passDetail">
       <span style="font-size:13px;color:var(--muted);">합격</span>
       <input type="number" id="passN" min="1" value="3" style="width:60px">
       <span style="font-size:13px;color:var(--muted);">명</span>
@@ -221,7 +439,7 @@ textarea{resize:vertical;min-height:100px;}
 </div>
 
 <!-- 테마 카드 -->
-<div class="themes-grid" style="max-width:900px;margin:0 auto;">
+<div class="themes-grid">
   <div class="theme-card tc-ball theme-card-border-ball" onclick="go('ball')">
     <div class="tc-icon">🎱</div>
     <div class="tc-title" style="color:var(--accent3)">핀볼</div>
@@ -246,7 +464,8 @@ textarea{resize:vertical;min-height:100px;}
     <div class="tc-desc">턴제 1대1 대결! 창·롱소드·레이피어·도끼·방패 무작위 조합으로 토너먼트 진행!</div>
     <div class="tc-badge badge-gold">정정당당한 결투!</div>
   </div>
-  <div class="theme-card tc-roulette theme-card-border-roulette" onclick="go('roulette')" style="grid-column:span 2;">
+  <!-- 룰렛: 모바일에서도 full-width -->
+  <div class="theme-card tc-roulette theme-card-border-roulette tc-roulette-card" onclick="go('roulette')" style="grid-column:span 2;">
     <div class="tc-icon">🎡</div>
     <div class="tc-title" style="color:#c864ff">룰렛</div>
     <div class="tc-desc">화려한 룰렛 바퀴를 직접 돌려 한 명씩 뽑기! 스핀할수록 줄어드는 참가자로 순위 결정!</div>
@@ -255,7 +474,7 @@ textarea{resize:vertical;min-height:100px;}
 </div>
 
 <!-- 팀 나누기 -->
-<div class="team-section" style="padding:0 160px;">
+<div class="team-section">
   <div class="section-label">👥 팀 나누기</div>
   <div class="team-toggle">
     <button class="toggle-btn active" onclick="toggleTeamPanel(this)">팀 설정 열기 / 닫기</button>
@@ -264,13 +483,13 @@ textarea{resize:vertical;min-height:100px;}
     <div class="team-rows" id="teamRows"></div>
     <button class="add-team-btn" onclick="addTeam()">+ 팀 추가</button>
     <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;">
-      <input type="checkbox" id="useLimit" style="width:auto;accent-color:var(--accent);"> 팀별 최대 인원 설정 사용 (초과 인원은 균등 배분)
+      <input type="checkbox" id="useLimit" style="width:auto;accent-color:var(--accent);flex-shrink:0;"> 팀별 최대 인원 설정 사용 (초과 인원은 균등 배분)
     </label>
     <button class="team-start-btn" onclick="startTeam()">👥 팀 나누기 시작!</button>
   </div>
 </div>
 
-<!-- 광고: 하단 배너 (728x90) -->
+<!-- 광고: 하단 배너 -->
 <div class="ad-bottom">
   <div class="ad-top-label">advertisement</div>
   <ins class="kakao_ad_area" style="display:none;"
@@ -280,12 +499,21 @@ textarea{resize:vertical;min-height:100px;}
   <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 
-
-<footer style="border-top:1px solid var(--border);padding:28px 160px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:10;">
+<footer>
   <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">RANDOM ARENA</div>
-  <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
-    <a href="mailto:louie07230723@gmail.com" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;" onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'" onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">문의 : louie07230723@gmail.com</a>
-    <a href="privacy.html" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;" onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'" onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">개인정보처리방침</a>
+  <div class="footer-links" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+    <a href="mailto:louie07230723@gmail.com"
+      style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;"
+      onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'"
+      onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">
+      문의 : louie07230723@gmail.com
+    </a>
+    <a href="privacy.html"
+      style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;"
+      onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'"
+      onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">
+      개인정보처리방침
+    </a>
   </div>
   <div style="font-size:12px;color:#444;">© 2025 RANDOM ARENA. All rights reserved.</div>
 </footer>
@@ -303,14 +531,33 @@ textarea{resize:vertical;min-height:100px;}
 const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
 let inputMode='name', teams=[], fileNames=[];
 
+/* 배경 별 파티클 */
 const bgCanvas=document.getElementById('bgCanvas');
 const bctx=bgCanvas.getContext('2d');
-bgCanvas.width=window.innerWidth; bgCanvas.height=window.innerHeight;
-window.addEventListener('resize',()=>{bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;});
-const stars=Array.from({length:80},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:Math.random()*1.5+.3,speed:Math.random()*.3+.1,opacity:Math.random()}));
-function drawBg(){bctx.clearRect(0,0,bgCanvas.width,bgCanvas.height);stars.forEach(s=>{s.y-=s.speed;if(s.y<0)s.y=bgCanvas.height;s.opacity+=.01;if(s.opacity>1)s.opacity=0;bctx.beginPath();bctx.arc(s.x,s.y,s.r,0,Math.PI*2);bctx.fillStyle=`rgba(200,200,255,${s.opacity*.4})`;bctx.fill();});requestAnimationFrame(drawBg);}
+function resizeBg(){bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;}
+resizeBg();
+window.addEventListener('resize',resizeBg);
+const stars=Array.from({length:80},()=>({
+  x:Math.random()*window.innerWidth,
+  y:Math.random()*window.innerHeight,
+  r:Math.random()*1.5+.3,
+  speed:Math.random()*.3+.1,
+  opacity:Math.random()
+}));
+function drawBg(){
+  bctx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  stars.forEach(s=>{
+    s.y-=s.speed;
+    if(s.y<0){s.y=bgCanvas.height;s.x=Math.random()*bgCanvas.width;}
+    s.opacity+=.01;if(s.opacity>1)s.opacity=0;
+    bctx.beginPath();bctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    bctx.fillStyle=`rgba(200,200,255,${s.opacity*.4})`;bctx.fill();
+  });
+  requestAnimationFrame(drawBg);
+}
 drawBg();
 
+/* 탭 전환 */
 function setIM(m,el){
   inputMode=m;
   ['name','num','file'].forEach(x=>document.getElementById(`im-${x}`).style.display=x===m?'block':'none');
@@ -318,36 +565,57 @@ function setIM(m,el){
   el.classList.add('active');
 }
 
+/* 이름 파싱 */
 function parseNames(raw){return raw.split(/[\n,，、]+/).map(s=>s.trim()).filter(s=>s);}
+
 function previewNames(){
   const names=parseNames(document.getElementById('namesTA').value);
   document.getElementById('nameTags').innerHTML=names.map(n=>`<div class="ntag">${n}</div>`).join('');
 }
+
+/* 파일 업로드 */
 function loadFile(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=ev=>{fileNames=parseNames(ev.target.result);document.getElementById('fileNameTags').innerHTML=fileNames.map(n=>`<div class="ntag">${n}</div>`).join('');};
+  r.onload=ev=>{
+    fileNames=parseNames(ev.target.result);
+    document.getElementById('fileNameTags').innerHTML=fileNames.map(n=>`<div class="ntag">${n}</div>`).join('');
+  };
   r.readAsText(f,'UTF-8');
 }
+
+/* CSV 다운로드 */
 function dlFile(){
   const names=parseNames(document.getElementById('makeTA').value);if(!names.length)return;
   const blob=new Blob(['\uFEFF'+names.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='participants.csv';a.click();
 }
+
+/* 합격/탈락 토글 */
 function togglePass(){
-  document.getElementById('passDetail').style.display=document.getElementById('usePass').checked?'flex':'none';
+  const pd=document.getElementById('passDetail');
+  if(document.getElementById('usePass').checked){pd.classList.add('show');}
+  else{pd.classList.remove('show');}
 }
 
+/* 참가자 가져오기 */
 function getParticipants(){
   if(inputMode==='name') return parseNames(document.getElementById('namesTA').value);
-  if(inputMode==='num'){const n=parseInt(document.getElementById('totalNum').value)||0;return Array.from({length:n},(_,i)=>`${i+1}번`);}
+  if(inputMode==='num'){
+    const n=parseInt(document.getElementById('totalNum').value)||0;
+    return Array.from({length:n},(_,i)=>`${i+1}번`);
+  }
   if(inputMode==='file') return fileNames;
   return [];
 }
 function getConfig(){
-  return {usePass:document.getElementById('usePass').checked,passN:parseInt(document.getElementById('passN').value)||3};
+  return {
+    usePass:document.getElementById('usePass').checked,
+    passN:parseInt(document.getElementById('passN').value)||3
+  };
 }
 
+/* 게임 이동 */
 function go(theme){
   const p=getParticipants();
   if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
@@ -356,21 +624,35 @@ function go(theme){
   window.open(`${theme}.html?${params.toString()}`, '_blank');
 }
 
-function initTeams(){teams=[{name:'A팀',color:COLORS[0],max:''},{name:'B팀',color:COLORS[1],max:''}];renderTeams();}
-function addTeam(){if(teams.length>=10)return;teams.push({name:`${String.fromCharCode(65+teams.length)}팀`,color:COLORS[teams.length%COLORS.length],max:''});renderTeams();}
-function delTeam(i){if(teams.length<=2)return;teams.splice(i,1);renderTeams();}
+/* 팀 나누기 */
+function initTeams(){
+  teams=[
+    {name:'A팀',color:COLORS[0],max:''},
+    {name:'B팀',color:COLORS[1],max:''}
+  ];
+  renderTeams();
+}
+function addTeam(){
+  if(teams.length>=10)return;
+  teams.push({name:`${String.fromCharCode(65+teams.length)}팀`,color:COLORS[teams.length%COLORS.length],max:''});
+  renderTeams();
+}
+function delTeam(i){
+  if(teams.length<=2)return;
+  teams.splice(i,1);
+  renderTeams();
+}
 function renderTeams(){
   document.getElementById('teamRows').innerHTML=teams.map((t,i)=>`
     <div class="team-row">
-      <input type="color" value="${t.color}" onchange="teams[${i}].color=this.value" class="team-row" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;padding:2px;">
+      <input type="color" value="${t.color}" onchange="teams[${i}].color=this.value">
       <input type="text" value="${t.name}" placeholder="팀 이름" onchange="teams[${i}].name=this.value" style="flex:2;">
-      <input type="number" min="1" max="100" value="${t.max||''}" placeholder="최대" title="최대 인원" style="flex:1;max-width:70px;" onchange="teams[${i}].max=this.value">
+      <input type="number" min="1" max="100" value="${t.max||''}" placeholder="최대" title="최대 인원" onchange="teams[${i}].max=this.value">
       <button class="del-t" onclick="delTeam(${i})">✕</button>
     </div>`).join('');
 }
 function toggleTeamPanel(el){
-  const setup=document.getElementById('teamSetup');
-  setup.classList.toggle('open');
+  document.getElementById('teamSetup').classList.toggle('open');
   el.classList.toggle('active');
 }
 function startTeam(){
@@ -381,20 +663,32 @@ function startTeam(){
   const result=teams.map(t=>({...t,members:[]}));
   if(useLimit){
     let pool=[...shuffled];
-    result.forEach(t=>{const max=parseInt(t.max)||Infinity;const take=Math.min(max,pool.length);t.members=pool.splice(0,take);});
-    while(pool.length>0){const min=result.reduce((a,b)=>a.members.length<=b.members.length?a:b);min.members.push(pool.shift());}
+    result.forEach(t=>{
+      const max=parseInt(t.max)||Infinity;
+      const take=Math.min(max,pool.length);
+      t.members=pool.splice(0,take);
+    });
+    while(pool.length>0){
+      const min=result.reduce((a,b)=>a.members.length<=b.members.length?a:b);
+      min.members.push(pool.shift());
+    }
   } else {
     shuffled.forEach((n,i)=>result[i%result.length].members.push(n));
   }
-  const grid=document.getElementById('teamResultGrid');
-  grid.innerHTML=result.map(t=>`
+  document.getElementById('teamResultGrid').innerHTML=result.map(t=>`
     <div class="team-card" style="border-color:${t.color}">
       <div class="team-card-name" style="color:${t.color}">${t.name} (${t.members.length}명)</div>
       ${t.members.map(m=>`<div class="team-card-member">👤 ${m}</div>`).join('')}
     </div>`).join('');
   document.getElementById('teamModal').classList.add('open');
 }
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
 
 initTeams();
 </script>
