@@ -46,6 +46,16 @@ canvas#colosseumCanvas{
 .game-container{position:relative;flex:1;display:flex;}
 input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;}
 .spd-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* ── 모바일 가로 강제 ── */
+@media(max-width:768px) and (orientation:portrait){
+  body{transform:rotate(90deg);transform-origin:left top;width:100vh;height:100vw;overflow:hidden;position:absolute;top:0;left:100%;}
+}
+@media(max-width:768px){
+  .side{width:220px;}
+  .bracket-item{font-size:13px;padding:7px 10px;}
+  .log{font-size:12px;}
+}
 </style>
 </head>
 <body>
@@ -71,8 +81,8 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;}
   <div class="side">
     <div class="ps">
       <div class="pt">⚡ 속도</div>
-      <input type="range" id="spd" min="0.05" max="3" step="0.05" value="0.4">
-      <div class="spd-row"><span>느림</span><span id="spdLabel">0.4x</span><span>빠름</span></div>
+      <input type="range" id="spd" min="0.05" max="3" step="0.05" value="0.8">
+      <div class="spd-row"><span>느림</span><span id="spdLabel">0.8x</span><span>빠름</span></div>
     </div>
     <div class="ps"><div class="pt">⚔️ 대진표</div></div>
     <div class="bracket-list" id="bracketList"></div>
@@ -195,8 +205,10 @@ function nextMatch(){
   if(queue.length===0)return;
   currentMatch=queue.shift();
   const[a,b]=currentMatch;
-  a.x=W/2-120;a.y=H/2;a.animX=0;
-  b.x=W/2+120;b.y=H/2;b.animX=0;
+  // W에 따라 동적으로 간격 계산 — 경기장 중심 기준 ±(W의 18%, 최소80, 최대200)
+  const gap = Math.max(80, Math.min(200, W * 0.18));
+  a.x=W/2-gap; a.y=H/2; a.animX=0;
+  b.x=W/2+gap; b.y=H/2; b.animX=0;
   a.atkTimer=0;b.atkTimer=0;
   matchTick=0;matchPause=0;
   addLog(`⚔️ ${a.name}(${a.weapon.emoji}${a.hasShield?'🛡️':''}) VS ${b.name}(${b.weapon.emoji}${b.hasShield?'🛡️':''})`, '');

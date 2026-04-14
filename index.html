@@ -30,14 +30,13 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .ad-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
 .ad-mock{width:110px;height:220px;background:rgba(255,255,255,0.02);border:1px dashed #2a2a2a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#333;text-align:center;}
 
-/* 헤더 */
-header{position:relative;z-index:10;padding:28px 160px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+header{position:relative;z-index:10;padding:28px clamp(16px,10vw,160px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
 .logo{font-family:'Oswald',sans-serif;font-size:32px;font-weight:900;letter-spacing:4px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .logo em{-webkit-text-fill-color:var(--accent2);font-style:normal;}
 .header-sub{font-size:13px;color:var(--muted);}
 
 /* 히어로 */
-.hero{position:relative;z-index:10;text-align:center;padding:60px 160px 40px;}
+.hero{position:relative;z-index:10;text-align:center;padding:60px clamp(16px,10vw,160px) 40px;}
 .hero-title{font-family:'Black Han Sans',sans-serif;font-size:52px;letter-spacing:3px;line-height:1.2;margin-bottom:16px;}
 .hero-title span{background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .hero-sub{font-size:16px;color:var(--muted);margin-bottom:40px;}
@@ -64,7 +63,7 @@ textarea{resize:vertical;min-height:100px;}
 .dl-btn:hover{border-color:var(--accent3);}
 
 /* 테마 카드 그리드 */
-.themes-grid{position:relative;z-index:10;display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;margin:0 auto;padding:0 160px 60px;}
+.themes-grid{position:relative;z-index:10;display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;margin:0 auto;padding:0 clamp(12px,10vw,160px) 60px;}
 .theme-card{background:var(--surface);border:2px solid var(--border);border-radius:20px;padding:32px 24px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
 .theme-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
 .theme-card:hover{transform:translateY(-4px);}
@@ -135,8 +134,62 @@ textarea{resize:vertical;min-height:100px;}
 .ad-bottom-side{background:linear-gradient(180deg,#0f0f1e,#141428);border:1px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;width:176px;}
 .ad-bottom-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
 
-@media(max-width:1400px){.ad-side{display:none;}header,.hero,footer{padding-left:24px;padding-right:24px;}.themes-grid{padding-left:24px;padding-right:24px;}.ad-bottom-sides{display:none;}}
-@media(max-width:700px){.themes-grid{grid-template-columns:1fr;}.hero-title{font-size:36px;}}
+@media(max-width:1400px){
+  .ad-side{display:none;}
+  header,.hero,footer{padding-left:24px;padding-right:24px;}
+  .themes-grid{padding-left:24px;padding-right:24px;}
+  .ad-bottom-sides{display:none;}
+}
+/* 태블릿 */
+@media(max-width:900px){
+  header{padding:14px 16px;}
+  .hero{padding:32px 16px 24px;}
+  .hero-title{font-size:38px;}
+  .hero-sub{font-size:14px;}
+  .themes-grid{grid-template-columns:repeat(2,1fr);padding:0 16px 40px;gap:14px;}
+  .tc-icon{font-size:36px;margin-bottom:8px;}
+  .tc-title{font-size:18px;}
+  .tc-desc{font-size:12px;}
+  .input-card{margin:0 16px 20px;padding:20px;}
+  .team-section{padding:0 16px !important;}
+  footer{padding:20px 16px;}
+  .ad-top{height:60px;}
+}
+/* 모바일 */
+@media(max-width:600px){
+  header{padding:10px 12px;}
+  .logo{font-size:22px;letter-spacing:2px;}
+  .header-sub{display:none;}
+  .hero{padding:22px 12px 16px;}
+  .hero-title{font-size:26px;letter-spacing:1px;}
+  .hero-sub{font-size:13px;margin-bottom:20px;}
+  /* 게임 카드: 모바일은 1열, 스크롤 */
+  .themes-grid{
+    grid-template-columns:1fr !important;
+    padding:0 12px 30px;gap:10px;
+  }
+  .theme-card{padding:18px 16px;border-radius:14px;}
+  .tc-icon{font-size:32px;margin-bottom:6px;}
+  .tc-title{font-size:17px;margin-bottom:5px;}
+  .tc-desc{font-size:12px;line-height:1.5;}
+  .tc-badge{font-size:9px;padding:2px 8px;}
+  /* 룰렛 카드 span 해제 */
+  .themes-grid .theme-card[style*="grid-column"]{grid-column:span 1 !important;}
+  /* 입력 카드 */
+  .input-card{margin:0 12px 16px;padding:16px;}
+  .input-card-title{font-size:14px;}
+  .input-tabs{gap:5px;}
+  .itab{font-size:12px;padding:7px 4px;}
+  textarea{min-height:70px;font-size:13px;}
+  /* 팀 나누기 */
+  .team-section{padding:0 12px !important;}
+  .team-setup{padding:16px;}
+  /* 상단 광고 모바일 */
+  .ad-top{height:50px;}
+  footer{padding:16px 12px;flex-direction:column;gap:8px;text-align:center;}
+  footer>div:first-child{font-size:14px;}
+  footer>div:last-child{font-size:11px;}
+}
 </style>
 </head>
 <body>
@@ -255,7 +308,7 @@ textarea{resize:vertical;min-height:100px;}
 </div>
 
 <!-- 팀 나누기 -->
-<div class="team-section" style="padding:0 160px;">
+<div class="team-section" style="padding:0 clamp(12px,10vw,160px);">
   <div class="section-label">👥 팀 나누기</div>
   <div class="team-toggle">
     <button class="toggle-btn active" onclick="toggleTeamPanel(this)">팀 설정 열기 / 닫기</button>
@@ -281,10 +334,10 @@ textarea{resize:vertical;min-height:100px;}
 </div>
 
 
-<footer style="border-top:1px solid var(--border);padding:28px 160px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:10;">
+<footer style="border-top:1px solid var(--border);padding:28px clamp(12px,10vw,160px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:10;">
   <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">RANDOM ARENA</div>
   <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
-    <a href="mailto:louie07230723@gmail.com" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;" onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'" onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">문의 : louie07230723@gmail.com</a>
+    <a href="/cdn-cgi/l/email-protection#f09c9f859995c0c7c2c3c0c7c2c3b0979d91999cde939f9d" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;" onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'" onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">문의 : <span class="__cf_email__" data-cfemail="98f4f7edf1fda8afaaaba8afaaabd8fff5f9f1f4b6fbf7f5">[email&#160;protected]</span></a>
     <a href="privacy.html" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;" onmouseover="this.style.color='#f5c518';this.style.borderColor='#f5c518'" onmouseout="this.style.color='#777';this.style.borderColor='rgba(255,255,255,0.07)'">개인정보처리방침</a>
   </div>
   <div style="font-size:12px;color:#444;">© 2025 RANDOM ARENA. All rights reserved.</div>
@@ -299,7 +352,7 @@ textarea{resize:vertical;min-height:100px;}
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
 let inputMode='name', teams=[], fileNames=[];
 
@@ -391,12 +444,4 @@ function startTeam(){
     <div class="team-card" style="border-color:${t.color}">
       <div class="team-card-name" style="color:${t.color}">${t.name} (${t.members.length}명)</div>
       ${t.members.map(m=>`<div class="team-card-member">👤 ${m}</div>`).join('')}
-    </div>`).join('');
-  document.getElementById('teamModal').classList.add('open');
-}
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-
-initTeams();
-</script>
-</body>
-</html>
+    </div
