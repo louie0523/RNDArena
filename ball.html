@@ -79,7 +79,7 @@ select:focus{border-color:var(--accent);}
 </head>
 <body>
 <header>
-  <div class="logo">🎱 공굴리기</div>
+  <div class="logo">🎱 핀볼</div>
   <div style="font-size:11px;color:var(--muted)" id="statusMsg">준비중...</div>
   <button class="back-btn" onclick="history.back()">← 돌아가기</button>
 </header>
@@ -88,7 +88,7 @@ select:focus{border-color:var(--accent);}
     <canvas id="gc"></canvas>
     <!-- 시작 오버레이 -->
     <div class="start-ov" id="startOv">
-      <div class="ot">🎱 공굴리기</div>
+      <div class="ot">🎱 핀볼</div>
       <div class="os" id="pInfo">참가자 로딩중...</div>
       <div class="size-row">
         <label>트랙 길이:</label>
@@ -912,7 +912,7 @@ function startGame(){
   // 사운드 컨텍스트 초기화 (사용자 제스처 필요)
   try{ getAudio(); }catch(e){}
   resizeCanvas();buildWorld();spawnBalls();updateRankPanel();
-  addLog('🎱 공굴리기 시작!','sp');
+  addLog('🎱 핀볼 시작!','sp');
   running=true;camY=0;
   requestAnimationFrame(loop);
 }
