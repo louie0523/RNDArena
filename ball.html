@@ -46,13 +46,18 @@ select:focus{border-color:var(--accent);}
 .size-sel{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;min-width:120px;}
 .size-sel:focus{border-color:var(--accent);}
 .sbtn{background:linear-gradient(135deg,#f5c518,#ff9500);color:#000;border:none;padding:13px 42px;border-radius:50px;font-family:'Black Han Sans',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
-.sbtn:hover{transform:scale(1.05);box-shadow:0 8px 28px rgba(245,197,24,.5);}
+.sbtn:hover{transform:scale(1.05);box-shadow:0 8px 28px rgba(245,197,24,.5);} 
 
 /* 결과 오버레이 */
-.res-ov{position:fixed;inset:0;background:rgba(0,0,0,.93);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:24px;overflow-y:auto;}
+.res-ov{position:fixed;inset:0;background:rgba(0,0,0,.93);display:none;flex-direction:column;align-items:center;justify-content:flex-start;z-index:200;padding:24px;overflow-y:auto;}
 .res-ov.show{display:flex;}
 .res-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:900;background:linear-gradient(135deg,#f5c518,#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:18px;}
-.res-item{display:flex;align-items:center;gap:12px;padding:9px 15px;margin-bottom:5px;background:rgba(255,255,255,.05);border-radius:9px;width:100%;max-width:400px;animation:sli .3s ease forwards;opacity:0;}
+.res-item.rank1 {
+  background: rgba(245,197,24,.12);
+  border: 1.5px solid rgba(245,197,24,.4);
+  padding: 13px 18px;
+  margin-bottom: 10px;
+}
 @keyframes sli{from{transform:translateX(-16px);opacity:0}to{transform:translateX(0);opacity:1}}
 .cbtn{margin-top:14px;background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);padding:9px 26px;border-radius:7px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
 .cbtn:hover{color:var(--text);}
@@ -870,7 +875,7 @@ function addLog(msg,type=''){
 function showResult(){
   document.getElementById('resItems').innerHTML=arrived.map((b,i)=>{
     const r=i+1,sym=r===1?'🥇':r===2?'🥈':r===3?'🥉':`${r}위`,isP=usePass&&r<=passN;
-    return `<div class="res-item" style="animation-delay:${i*.06}s;border-left:4px solid ${b.color}">
+    return `<div class="res-item${r===1?' rank1':''}" style="animation-delay:${i*.06}s;border-left:4px solid ${b.color}">
       <div style="font-family:'Oswald',sans-serif;font-size:17px;min-width:32px;color:${b.color}">${sym}</div>
       <div style="flex:1;font-family:'Black Han Sans',sans-serif;font-size:14px">${b.name}</div>
       ${usePass?`<div style="font-size:10px;padding:2px 7px;border-radius:8px;background:${isP?'rgba(0,230,118,.18)':'rgba(255,77,77,.18)'};color:${isP?'#00e676':'#ff4d4d'}">${isP?'✅합격':'❌탈락'}</div>`:''}
