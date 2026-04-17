@@ -8,7 +8,8 @@
 <style>
 :root{--bg:#0a0500;--surface:#160c01;--accent:#f5c518;--accent2:#ff4d4d;--text:#f5ead0;--muted:#8a7040;--border:rgba(200,150,50,0.14);}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+html{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;height:100vh;max-height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(0,0,0,0.65);}
 .logo{font-family:'Oswald',sans-serif;font-size:18px;font-weight:900;color:var(--accent);}
 .back-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;}
@@ -104,7 +105,7 @@ function playWin(){[660,880,1100,1320].forEach((f,i)=>setTimeout(()=>sfx(f,.15,'
 const params=new URLSearchParams(location.search);
 const names=params.get('names')?params.get('names').split(',').filter(Boolean):['철수','영희','민준','지수','태양'];
 const usePass=params.get('usePass')==='true',passN=parseInt(params.get('passN'))||3;
-document.getElementById('pInfo').innerHTML=`참가자 ${names.length}명<br>무기를 들고 1대1 토너먼트!<br>창·롱소드·레이피어·도끼로 최후의 승자를!`;
+document.getElementById('pInfo').innerHTML=`참가자 ${names.length}명<br>무기를 들고 1대1 토너먼트!<br>수수께끼 무기로 최후의 승자를!`;
 
 const canvas=document.getElementById('colosseumCanvas');
 const ctx=canvas.getContext('2d');
@@ -126,11 +127,14 @@ window.addEventListener('resize', scaleCanvas);
 
 const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6'];
 const WEAPONS={
-  spear:{name:'창',emoji:'🏹',atkSpd:1.0,dmg:[20,30],evadeVsNormal:0.1,evadeVsShield:0.08},
-  longsword:{name:'롱소드',emoji:'⚔️',atkSpd:1.0,dmg:[35,50],evadeVsNormal:0.2,evadeVsShield:0.12},
-  rapier:{name:'레이피어',emoji:'🗡️',atkSpd:2.0,dmg:[12,20],evadeVsNormal:0.15,evadeVsShield:0.10},
+  spear:{name:'활',emoji:'🏹',atkSpd:1.0,dmg:[20,30],evadeVsNormal:0.1,evadeVsShield:0.08},
+  longsword:{name:'롱소드',emoji:'⚔️',atkSpd:1.0,dmg:[35,50],evadeVsNormal:0.2,evadeVsShield:0.10},
+  rapier:{name:'레이피어',emoji:'🗡️',atkSpd:3.0,dmg:[8,14],evadeVsNormal:0.15,evadeVsShield:0.12},
   axe:{name:'도끼',emoji:'🪓',atkSpd:0.5,dmg:[50,70],evadeVsNormal:0.3,evadeVsShield:0.0},
-  banana:{name:'바나나',emoji:'🍌',atkSpd:20.0,dmg:[1,5],evadeVsNormal:0.05,evadeVsShield:0.03,hidden:true},
+  bikini:{name:'비키니',emoji:'👙',atkSpd:3.0,dmg:[3,8],evadeVsNormal:0.1,evadeVsShield:0.11},
+  rosenife:{name:'장미칼',emoji:'🔪',atkSpd:0.7,dmg:[40,60],evadeVsNormal:0.5,evadeVsShield:0.15},
+  banana:{name:'바나나',emoji:'🍌',atkSpd:20.0,dmg:[-1,10],evadeVsNormal:0.1,evadeVsShield:0.08,hidden:true},
+  banana:{name:'매운고추',emoji:'🌶',atkSpd:0.5,dmg:[-150,150],evadeVsNormal:0.0,evadeVsShield:0.0,hidden:true},
 };
 const WPKEYS=Object.keys(WEAPONS).filter(k=>!WEAPONS[k].hidden);
 
@@ -251,6 +255,11 @@ function doAttack(attacker,defender){
   if(attacker.weaponKey==='banana'&&!attacker.bananaRevealed){
     attacker.bananaRevealed=true;
     addLog(`🍌 ${attacker.name}이(가) 바나나를 꺼냈다!! 【히든 아이템】`,'win');
+    sfx(523,.1,'triangle',.5);sfx(659,.1,'triangle',.5);setTimeout(()=>sfx(784,.2,'triangle',.6),100);
+    spawnParticle(attacker.x,attacker.y,'#FFE135',20);
+  } else if(attacker.weaponKey==='hotpaper'&&!attacker.bananaRevealed){
+    attacker.bananaRevealed=true;
+    addLog(`🌶 ${attacker.name}이(가) 매운 고추를 꺼냈다!! 【히든 아이템】`,'win');
     sfx(523,.1,'triangle',.5);sfx(659,.1,'triangle',.5);setTimeout(()=>sfx(784,.2,'triangle',.6),100);
     spawnParticle(attacker.x,attacker.y,'#FFE135',20);
   }
@@ -465,7 +474,7 @@ function showResult(){
     const rank=i+1,sym=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`${rank}위`,isPass=usePass&&rank<=passN;
     return`<div class="ri3" style="animation-delay:${i*0.06}s;border-left:4px solid ${f.color}">
       <div style="font-family:'Oswald',sans-serif;font-size:18px;min-width:32px;color:${f.color}">${sym}</div>
-      <div style="flex:1;font-family:'Black Han Sans',sans-serif;font-size:15px">${f.name} ${f.weapon.emoji}${f.weaponKey==='banana'?' 🍌히든':''}${f.hasShield?'🛡️':''}</div>
+      <div style="flex:1;font-family:'Black Han Sans',sans-serif;font-size:15px">${f.name} ${f.weapon.emoji}${f.weaponKey==='banana'?' 바나나!':''}${f.hasShield?'🛡️':''}</div>
       ${usePass?`<div style="font-size:11px;padding:2px 8px;border-radius:10px;background:${isPass?'rgba(0,230,118,.2)':'rgba(255,77,77,.2)'};color:${isPass?'#00e676':'#ff4d4d'}">${isPass?'✅합격':'❌탈락'}</div>`:''}
     </div>`;
   }).join('');
