@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6300458886989288"
-     crossorigin="anonymous"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎲 RANDOM ARENA</title>
@@ -121,6 +119,7 @@ textarea{resize:vertical;min-height:100px;}
 .tc-battle::before{background:radial-gradient(ellipse at top,rgba(255,77,77,.08),transparent);}
 .tc-colosseum::before{background:radial-gradient(ellipse at top,rgba(245,197,24,.08),transparent);}
 .tc-roulette::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
+.tc-ladder::before{background:radial-gradient(ellipse at top,rgba(56,189,248,.08),transparent);}
 .tc-icon{font-size:48px;margin-bottom:12px;}
 .tc-title{font-family:'Black Han Sans',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:8px;}
 .tc-desc{font-size:13px;color:var(--muted);line-height:1.6;}
@@ -140,6 +139,9 @@ textarea{resize:vertical;min-height:100px;}
 .theme-card-border-colosseum{border-color:rgba(245,197,24,.3);}
 .theme-card-border-colosseum:hover{border-color:var(--accent);box-shadow:0 0 30px rgba(245,197,24,.15);}
 .theme-card-border-roulette{border-color:rgba(200,100,255,.3);}
+.theme-card-border-ladder{border-color:rgba(56,189,248,.3);}
+.theme-card-border-ladder:hover{border-color:#38bdf8;box-shadow:0 0 30px rgba(56,189,248,.15);}
+.badge-cyan{background:rgba(56,189,248,.15);color:#38bdf8;}
 .theme-card-border-roulette:hover{border-color:#c864ff;box-shadow:0 0 30px rgba(200,100,255,.15);}
 
 /* ───── 팀 나누기 ───── */
@@ -231,6 +233,38 @@ footer{
   position:relative;z-index:10;
 }
 
+/* ───── 팀 배정 도구 패널 ───── */
+.team-tools-section{
+  max-width:700px;margin:0 auto 40px;position:relative;z-index:10;padding:0 200px;
+}
+.team-tools-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+}
+.tool-panel{
+  background:var(--surface);border:2px solid var(--border);border-radius:20px;
+  padding:28px 20px;cursor:pointer;transition:all .3s;
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  position:relative;overflow:hidden;
+}
+.tool-panel::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.tool-panel:hover{transform:translateY(-4px);}
+.tool-panel:hover::before{opacity:1;}
+.tp-hat{border-color:rgba(200,100,255,.3);}
+.tp-hat::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
+.tp-hat:hover{border-color:#c864ff;box-shadow:0 0 30px rgba(200,100,255,.15);}
+.tp-ladder{border-color:rgba(56,189,248,.3);}
+.tp-ladder::before{background:radial-gradient(ellipse at top,rgba(56,189,248,.08),transparent);}
+.tp-ladder:hover{border-color:#38bdf8;box-shadow:0 0 30px rgba(56,189,248,.15);}
+.tp-icon{font-size:44px;}
+.tp-title{font-family:'Black Han Sans',sans-serif;font-size:20px;letter-spacing:2px;}
+.tp-hat .tp-title{color:#c864ff;}
+.tp-ladder .tp-title{color:#38bdf8;}
+.tp-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+/* ───── 광고 배너 패딩 ───── */
+.ad-top{padding:12px 0;}
+.ad-bottom{padding:12px 0;}
+
 /* ═══════════════════════════════════════
    반응형 브레이크포인트
 ═══════════════════════════════════════ */
@@ -242,6 +276,7 @@ footer{
   .hero{padding:48px 24px 32px;}
   .themes-grid{padding:0 24px 48px;}
   .team-section{padding:0 24px;}
+  .team-tools-section{padding:0 24px;}
   footer{padding:24px;}
 }
 
@@ -255,11 +290,15 @@ footer{
   .tc-title{font-size:20px;}
   .input-card{margin:0 20px 20px;}
   .team-section{padding:0 20px !important;}
+  .team-tools-section{padding:0 20px !important;}
   footer{padding:20px;}
 }
 
 /* ─ 600px 이하: 모바일 ─ */
 @media(max-width:600px){
+
+  /* 사이드 광고 완전 숨김 */
+  .ad-side{display:none !important;}
 
   /* 하단 고정 광고 표시 */
   .ad-mobile-bottom{display:flex;}
@@ -320,6 +359,14 @@ footer{
   .team-card{min-width:120px;padding:12px 14px;}
   .team-card-name{font-size:13px;}
   .team-card-member{font-size:12px;}
+
+  /* 팀 배정 도구 */
+  .team-tools-section{padding:0 12px !important;margin-bottom:28px;}
+  .team-tools-grid{gap:10px;}
+  .tool-panel{padding:16px 14px;border-radius:14px;}
+  .tp-icon{font-size:32px;}
+  .tp-title{font-size:16px;}
+  .tp-desc{font-size:11px;}
 
   /* 하단 광고 */
   .ad-bottom{height:56px;}
@@ -415,7 +462,7 @@ footer{
   <div id="im-num" style="display:none">
     <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px;">총 인원수</label>
     <input type="number" id="totalNum" min="2" max="200" value="10">
-    <p class="hint">1번~N번으로 표시됩니다</p>
+    <p class="hint">1번, 2번, 3번… 순으로 표시됩니다</p>
   </div>
 
   <div id="im-file" style="display:none">
@@ -489,6 +536,27 @@ footer{
     </label>
     <button class="team-start-btn" onclick="startTeam()">👥 팀 나누기 (기본)</button>
     <button class="team-start-btn" onclick="startSorting()" style="margin-top:10px;background:linear-gradient(135deg,#c084fc,#a855f7);box-shadow:0 0 20px rgba(192,132,252,.25);">🎩 마법의 모자로 팀 배정!</button>
+  </div>
+</div>
+
+<!-- 팀 배정 도구 패널 -->
+<div class="team-tools-section">
+  <div class="section-label" style="text-align:center;margin-bottom:16px;">🎮 팀 배정 미니게임</div>
+  <div class="team-tools-grid">
+    <!-- 마법의 모자 -->
+    <div class="tool-panel tp-hat" onclick="startSorting()">
+      <div class="tp-icon">🎩</div>
+      <div class="tp-title">마법의 모자</div>
+      <div class="tp-desc">호그와트식 팀 배정! 모자가 한 명씩 호명하며 극적으로 팀을 나눕니다.</div>
+      <div class="tc-badge badge-purple" style="margin-top:auto;">팀 설정 필요</div>
+    </div>
+    <!-- 변칙 사다리 -->
+    <div class="tool-panel tp-ladder" onclick="goTeam('ladder')">
+      <div class="tp-icon">🪜</div>
+      <div class="tp-title">변칙 사다리타기</div>
+      <div class="tp-desc">꼬인 사다리를 타고 내려와 팀 결정! 유턴·순서 미루기 등 변칙 이벤트로 예측불허!</div>
+      <div class="tc-badge badge-cyan" style="margin-top:auto;">팀 설정 필요</div>
+    </div>
   </div>
 </div>
 
@@ -627,6 +695,19 @@ function go(theme){
   window.open(`${theme}.html?${params.toString()}`, '_blank');
 }
 
+/* 팀 배정 게임 이동 (팀 설정 자동 포함) */
+function goTeam(theme){
+  const p=getParticipants();
+  if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
+  if(teams.length<2){alert('팀을 2개 이상 설정하세요!');return;}
+  const teamsData=teams.map(t=>({name:t.name,color:t.color}));
+  const params=new URLSearchParams({
+    names:p.join(','),
+    teams:encodeURIComponent(JSON.stringify(teamsData))
+  });
+  window.open(`${theme}.html?${params.toString()}`,'_blank');
+}
+
 /* 팀 나누기 */
 function initTeams(){
   teams=[
@@ -671,12 +752,23 @@ function startTeam(){
       const take=Math.min(max,pool.length);
       t.members=pool.splice(0,take);
     });
+    // 남은 인원 균등분배
     while(pool.length>0){
       const min=result.reduce((a,b)=>a.members.length<=b.members.length?a:b);
       min.members.push(pool.shift());
     }
   } else {
-    shuffled.forEach((n,i)=>result[i%result.length].members.push(n));
+    // 완전 균등 분배: base명 + 나머지는 앞 팀부터 1명씩 추가
+    const total=shuffled.length;
+    const tCount=result.length;
+    const base=Math.floor(total/tCount);
+    const extra=total%tCount;
+    let idx=0;
+    result.forEach((t,i)=>{
+      const cnt=base+(i<extra?1:0);
+      t.members=shuffled.slice(idx,idx+cnt);
+      idx+=cnt;
+    });
   }
   document.getElementById('teamResultGrid').innerHTML=result.map(t=>`
     <div class="team-card" style="border-color:${t.color}">

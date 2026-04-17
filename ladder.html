@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🪜 변칙 사다리타기 — RANDOM ARENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&family=Oswald:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04080f;--surface:#0c1220;--surface2:#131a2c;
+  --accent:#38bdf8;--accent2:#f97316;
+  --text:#ddf0ff;--muted:#3d5a78;--border:rgba(56,189,248,0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;}
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+header{
+  position:relative;z-index:10;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 18px;border-bottom:1px solid var(--border);
+  background:rgba(4,8,15,0.92);backdrop-filter:blur(10px);gap:10px;
+}
+.logo{font-family:'Oswald',sans-serif;font-size:16px;font-weight:900;color:var(--accent);letter-spacing:2px;white-space:nowrap;}
+.hdr-mid{display:flex;align-items:center;gap:10px;flex:1;justify-content:center;}
+.speed-wrap{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap;}
+.speed-wrap input[type=range]{width:72px;accent-color:var(--accent);cursor:pointer;}
+#speedLabel{font-size:11px;color:var(--accent);min-width:40px;}
+.skip-btn-h{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.4);color:#f97316;padding:4px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;transition:all .2s;white-space:nowrap;}
+.skip-btn-h:hover{background:rgba(249,115,22,.25);}
+.back-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all .2s;white-space:nowrap;}
+.back-btn:hover{border-color:var(--accent);color:var(--accent);}
+.game-area{flex:1;position:relative;overflow:hidden;z-index:5;}
+#ladderCanvas{display:block;width:100%;height:100%;}
+.overlay{position:absolute;inset:0;background:rgba(4,8,15,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
+.ot{font-family:'Black Han Sans',sans-serif;font-size:27px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;}
+.os{font-size:13px;color:var(--muted);margin-bottom:26px;text-align:center;line-height:1.85;}
+.sbtn{background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#000;border:none;padding:13px 42px;border-radius:50px;font-family:'Black Han Sans',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;transition:all .2s;box-shadow:0 0 28px rgba(56,189,248,.38);}
+.sbtn:hover{transform:scale(1.05);box-shadow:0 8px 32px rgba(56,189,248,.55);}
+.event-popup{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.88);
+  background:rgba(8,14,26,.97);border:2px solid rgba(249,115,22,0.5);
+  border-radius:18px;padding:18px 30px;text-align:center;
+  z-index:150;pointer-events:none;opacity:0;
+  transition:opacity .22s,transform .22s;max-width:300px;width:88%;
+  box-shadow:0 0 40px rgba(249,115,22,0.4);
+}
+.event-popup.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.ep-icon{font-size:34px;margin-bottom:6px;}
+.ep-title{font-family:'Black Han Sans',sans-serif;font-size:17px;letter-spacing:2px;color:#f97316;margin-bottom:4px;}
+.ep-name{font-size:14px;color:rgba(255,255,255,0.75);margin-bottom:3px;}
+.ep-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.result-overlay{
+  position:absolute;inset:0;background:rgba(4,8,15,.97);
+  display:none;flex-direction:column;align-items:center;
+  justify-content:flex-start;z-index:200;overflow-y:auto;padding:16px 16px 32px;
+}
+.result-overlay.show{display:flex;}
+.result-title{font-family:'Oswald',sans-serif;font-size:24px;font-weight:900;letter-spacing:3px;color:var(--accent);text-shadow:0 0 20px rgba(56,189,248,.5);margin-top:clamp(10px,4vh,48px);margin-bottom:14px;flex-shrink:0;}
+.team-result-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;width:100%;max-width:880px;}
+.team-res-card{background:var(--surface);border-radius:12px;padding:14px 18px;min-width:140px;flex:1;max-width:200px;border-top:3px solid;animation:cardIn .4s ease forwards;opacity:0;}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.trc-name{font-family:'Black Han Sans',sans-serif;font-size:13px;margin-bottom:8px;}
+.trc-member{font-size:12px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);}
+.trc-member:last-child{border:none;}
+.cbtn{margin-top:18px;flex-shrink:0;background:none;border:1px solid var(--border);color:var(--muted);padding:8px 26px;border-radius:8px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;transition:all .2s;}
+.cbtn:hover{color:var(--text);border-color:#aaa;}
+.cf{position:absolute;border-radius:2px;animation:cfFall linear forwards;pointer-events:none;}
+@keyframes cfFall{0%{transform:translateY(-10px) rotate(0);opacity:1;}100%{transform:translateY(92vh) rotate(720deg);opacity:0;}}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<header>
+  <div class="logo">🪜 변칙 사다리</div>
+  <div class="hdr-mid">
+    <div class="speed-wrap">
+      🐢<input type="range" id="speedRange" min="3" max="8" value="4" oninput="updateSpeed(this.value)">🐇
+      <span id="speedLabel">보통</span>
+    </div>
+    <button class="skip-btn-h" id="skipBtn" onclick="doSkip()" style="display:none">⏩ 스킵</button>
+  </div>
+  <button class="back-btn" onclick="location.href='index.html'">← 돌아가기</button>
+</header>
+<div class="game-area" id="gameArea">
+  <canvas id="ladderCanvas"></canvas>
+  <div class="overlay" id="startOverlay">
+    <div style="font-size:56px;margin-bottom:10px;filter:drop-shadow(0 0 18px rgba(56,189,248,.7))">🪜</div>
+    <div class="ot">변칙 사다리타기</div>
+    <div class="os" id="pInfo">불러오는 중…</div>
+    <button class="sbtn" onclick="startGame()">🪜 시작!</button>
+  </div>
+  <div class="event-popup" id="eventPopup">
+    <div class="ep-icon" id="epIcon">⚡</div>
+    <div class="ep-title" id="epTitle">이벤트!</div>
+    <div class="ep-name" id="epName"></div>
+    <div class="ep-desc" id="epDesc"></div>
+  </div>
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-title">🪜 팀 배정 완료!</div>
+    <div class="team-result-grid" id="resultGrid"></div>
+    <button class="cbtn" onclick="document.getElementById('resultOverlay').classList.remove('show')">✕ 닫기</button>
+  </div>
+</div>
+<script>
+// ══════════════════════════════════════
+// URL 파라미터
+// ══════════════════════════════════════
+const params=new URLSearchParams(location.search);
+const names=params.get('names')?params.get('names').split(',').filter(Boolean):['1번','2번','3번','4번','5번','6번'];
+const N=names.length;
+const teamParam=params.get('teams');
+let teams=[];
+if(teamParam){try{teams=JSON.parse(decodeURIComponent(teamParam));}catch(e){}}
+if(!teams.length){
+  const DC=['#FF6B6B','#4D96FF','#6BCB77','#FFD93D','#FF6FC8','#C77DFF','#FF9A3C','#00D4FF'];
+  teams=[{name:'A팀',color:DC[0]},{name:'B팀',color:DC[1]}];
+}
+const TEAM_N=teams.length;
+teams.forEach(t=>{t.members=[];});
+document.getElementById('pInfo').innerHTML=`참가자 ${N}명 · ${TEAM_N}개 팀<br>꼬여있는 사다리를 타고 팀이 결정됩니다!<br><span style="font-size:11px;color:#3d5a78">⚡ 가끔 변칙 이벤트가 발생할 수 있어요</span>`;
+
+// ══════════════════════════════════════
+// 배경
+// ══════════════════════════════════════
+const bgCanvas=document.getElementById('bgCanvas');
+const bctx=bgCanvas.getContext('2d');
+const stars=Array.from({length:90},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:Math.random()*1+.2,op:Math.random()}));
+function resizeBg(){bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;}
+resizeBg();
+window.addEventListener('resize',()=>{resizeBg();if(gameStarted)rebuildAll();});
+(function drawBg(){bctx.clearRect(0,0,bgCanvas.width,bgCanvas.height);stars.forEach(s=>{s.op+=.005;if(s.op>1)s.op=0;bctx.beginPath();bctx.arc(s.x,s.y,s.r,0,Math.PI*2);bctx.fillStyle=`rgba(80,160,255,${s.op*.35})`;bctx.fill();});requestAnimationFrame(drawBg);})();
+
+// ══════════════════════════════════════
+// 오디오
+// ══════════════════════════════════════
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function sfx(f,d,t='sine',v=.12){try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+const sndStep=()=>{if(skipMode)return;sfx(260+Math.random()*60,.1,'triangle',.08);};
+const sndTurn=()=>{if(skipMode)return;sfx(520,.1,'sine',.18);setTimeout(()=>sfx(400,.1,'sine',.16),65);};
+const sndEvent=()=>{if(skipMode)return;[600,800,600].forEach((f,i)=>setTimeout(()=>sfx(f,.12,'square',.2),i*70));};
+const sndArrive=()=>sfx(523,.12,'sine',.22);
+const sndFanfare=()=>{[523,659,784,880,1047,880,1047].forEach((f,i)=>setTimeout(()=>sfx(f,.18,'triangle',.3),i*85));};
+
+// ══════════════════════════════════════
+// 속도
+// ══════════════════════════════════════
+let speedMult=4;
+let skipMode=false;
+const SL=['','','','보통','보통','빠르게','빠르게','매우빠름','매우빠름'];
+function updateSpeed(v){speedMult=parseInt(v);document.getElementById('speedLabel').textContent=SL[speedMult]||'보통';}
+updateSpeed(4);
+function doSkip(){skipMode=true;speedMult=20;document.getElementById('eventPopup').classList.remove('show');document.getElementById('speedRange').value=8;document.getElementById('speedLabel').textContent='스킵';}
+
+// ══════════════════════════════════════
+// 캔버스
+// ══════════════════════════════════════
+const canvas=document.getElementById('ladderCanvas');
+const ctx=canvas.getContext('2d');
+const gameArea=document.getElementById('gameArea');
+function resizeCanvas(){canvas.width=gameArea.clientWidth;canvas.height=gameArea.clientHeight;}
+resizeCanvas();
+
+// ══════════════════════════════════════
+// 레이아웃 상수
+// ══════════════════════════════════════
+const TOP_PAD=52,BOT_PAD=56;
+
+let layout={};
+let bars=[];
+let teamSlots=[];
+let paths=[];
+let playerStates=[];
+let playerQueue=[];
+let animState=null;
+let gameStarted=false;
+let allDone=false;
+let comebackNameIdx=-1;
+let detourRows={};
+
+function buildLayout(){
+  const W=canvas.width,H=canvas.height;
+  const side=Math.max(26,W*0.05);
+  const colSpacing=N<=1?0:(W-side*2)/(N-1);
+  const cols=Array.from({length:N},(_,i)=>side+i*colSpacing);
+  const numRows=Math.max(14,Math.min(32,N*3));
+  const rowSpacing=(H-TOP_PAD-BOT_PAD)/(numRows+1);
+  layout={W,H,side,colSpacing,cols,numRows,rowSpacing};
+}
+
+function colX(c){return layout.cols[Math.max(0,Math.min(N-1,c))];}
+function rowY(r){
+  if(r===0) return TOP_PAD-4;
+  if(r===layout.numRows+1) return layout.H-BOT_PAD+4;
+  return TOP_PAD+r*layout.rowSpacing;
+}
+
+// ══════════════════════════════════════
+// 가로줄 생성
+// ══════════════════════════════════════
+function buildBars(){
+  const res=[],occ=new Set();
+  // 원래 확률의 1/7 수준으로 줄임 (너무 자주 옆으로 꺾이지 않게)
+  const den=Math.min(0.055,0.072-N*0.001);
+  for(let r=1;r<=layout.numRows;r++){
+    for(let c=0;c<N-1;c++){
+      if(occ.has(`${r},${c}`)||occ.has(`${r},${c+1}`)||occ.has(`${r},${c-1}`))continue;
+      if(Math.random()<den){res.push({row:r,colL:c});occ.add(`${r},${c}`);occ.add(`${r},${c+1}`);}
+    }
+  }
+  return res;
+}
+
+// ══════════════════════════════════════
+// 팀 슬롯 (하단) - 완전 균등 분배
+// N명을 TEAM_N개 팀에 최대한 균등하게 배분
+// 예) 10명 2팀 → 5:5 / 11명 2팀 → 6:5 / 11명 3팀 → 4:4:3
+// ══════════════════════════════════════
+function buildTeamSlots(){
+  const slots=[];
+  const base=Math.floor(N/TEAM_N);   // 각 팀 기본 인원
+  const extra=N%TEAM_N;              // 1명 더 받는 팀 수
+  for(let t=0;t<TEAM_N;t++){
+    const cnt=base+(t<extra?1:0);
+    for(let k=0;k<cnt;k++) slots.push(t);
+  }
+  return shuffle(slots);
+}
+
+// ══════════════════════════════════════
+// 경로 계산
+// ══════════════════════════════════════
+function computePath(nameIdx,detourRow){
+  const numRows=layout.numRows;
+  const startCol=nameIdx; // 출발 컬럼 = nameIdx (0~N-1 순서)
+  const path=[{col:startCol,row:0,type:'start'}];
+  let col=startCol;
+  for(let r=1;r<=numRows;r++){
+    if(r===detourRow){
+      // 유턴: 옆으로 갔다가 돌아옴 (col 변화 없음, 시각 효과용)
+      const dir=col<N-1?1:-1;
+      path.push({col:col+dir,row:r,type:'detour_go'});
+      path.push({col,row:r,type:'detour_back'});
+      continue;
+    }
+    const bR=bars.find(b=>b.row===r&&b.colL===col);
+    const bL=bars.find(b=>b.row===r&&b.colL===col-1);
+    if(bR){col++;path.push({col,row:r,type:'right'});}
+    else if(bL){col--;path.push({col,row:r,type:'left'});}
+    else path.push({col,row:r,type:'down'});
+  }
+  path.push({col,row:numRows+1,type:'arrive'});
+  return path;
+}
+
+// ══════════════════════════════════════
+// 전체 초기화
+// ══════════════════════════════════════
+function rebuildAll(){
+  resizeCanvas();
+  buildLayout();
+  bars=buildBars();
+  teamSlots=buildTeamSlots();
+  teams.forEach(t=>{t.members=[];});
+
+  // 이벤트 배치
+  detourRows={};
+  comebackNameIdx=-1;
+  for(let i=0;i<N;i++){
+    if(Math.random()<0.15){
+      detourRows[i]=2+Math.floor(Math.random()*(layout.numRows-4));
+    }
+  }
+  if(N>2&&Math.random()<0.05){
+    comebackNameIdx=Math.floor(Math.random()*(N-1)); // 마지막 제외
+  }
+
+  // 경로 계산
+  paths=Array.from({length:N},(_,i)=>computePath(i,detourRows[i]??-1));
+
+  playerStates=Array(N).fill(null);
+
+  // 큐: 랜덤 순서
+  playerQueue=shuffle(Array.from({length:N},(_,i)=>i));
+
+  // comeback 처리: 해당 참가자를 큐 뒤쪽으로 이동
+  if(comebackNameIdx!==-1){
+    const pos=playerQueue.indexOf(comebackNameIdx);
+    if(pos!==-1){
+      playerQueue.splice(pos,1);
+      const minAt=Math.max(1,pos);
+      const maxAt=Math.max(minAt,playerQueue.length-1);
+      const at=minAt+Math.floor(Math.random()*(maxAt-minAt+1));
+      playerQueue.splice(at,0,comebackNameIdx);
+    }
+  }
+
+  drawStatic(-1);
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ══════════════════════════════════════
+// 유틸
+// ══════════════════════════════════════
+function hexRgb(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`${r},${g},${b}`;}
+function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+function lerp(a,b,t){return a+(b-a)*t;}
+function ease(t){return t<0.5?2*t*t:-1+(4-2*t)*t;}
+
+// ══════════════════════════════════════
+// 정적 씬 그리기
+// ══════════════════════════════════════
+function drawStatic(curNameIdx){
+  const{W,H}=layout;
+  ctx.clearRect(0,0,W,H);
+  const bW=Math.min(layout.colSpacing*0.88,76),bH=26;
+
+  // 완료 트레일
+  playerStates.forEach((st,pi)=>{
+    if(!st?.done||!st.fullTrail)return;
+    const t=teams[teamSlots[st.destCol]];
+    const rgb=t?hexRgb(t.color):'56,189,248';
+    const trail=st.fullTrail;
+    for(let i=1;i<trail.length;i++){
+      ctx.strokeStyle=`rgba(${rgb},${(i/trail.length)*0.32})`;
+      ctx.lineWidth=2;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke();
+    }
+    // 도착 표시 (팀 슬롯에 이름 표시)
+    const dx=colX(st.destCol);
+    const t2=teams[teamSlots[st.destCol]];
+    if(t2){
+      ctx.fillStyle=`rgba(${hexRgb(t2.color)},0.25)`;
+      rrect(dx-bW/2,H-BOT_PAD+7,bW,bH,7);ctx.fill();
+    }
+  });
+
+  // 세로 라인
+  for(let c=0;c<N;c++){
+    const x=colX(c);
+    const isCur=curNameIdx!==-1&&c===curNameIdx;
+    const a=isCur?0.65:0.18;
+    const grd=ctx.createLinearGradient(0,TOP_PAD,0,H-BOT_PAD);
+    grd.addColorStop(0,`rgba(56,189,248,${a*1.4})`);
+    grd.addColorStop(0.5,`rgba(56,189,248,${a})`);
+    grd.addColorStop(1,`rgba(56,189,248,${a*0.4})`);
+    ctx.strokeStyle=grd;ctx.lineWidth=isCur?2.5:1.5;
+    ctx.beginPath();ctx.moveTo(x,TOP_PAD);ctx.lineTo(x,H-BOT_PAD);ctx.stroke();
+  }
+
+  // 가로줄
+  bars.forEach(b=>{
+    const y=rowY(b.row),x1=colX(b.colL),x2=colX(b.colL+1);
+    ctx.strokeStyle='rgba(56,189,248,0.3)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+    [x1,x2].forEach(px=>{ctx.beginPath();ctx.arc(px,y,2.5,0,Math.PI*2);ctx.fillStyle='rgba(56,189,248,0.5)';ctx.fill();});
+  });
+
+  // 상단 이름 박스
+  names.forEach((name,i)=>{
+    const x=colX(i);
+    const done=playerStates[i]?.done;
+    const isCur=i===curNameIdx;
+    const isComeback=i===comebackNameIdx&&!done;
+    ctx.fillStyle=done?'rgba(56,189,248,0.05)':isCur?'rgba(56,189,248,0.25)':'rgba(56,189,248,0.1)';
+    rrect(x-bW/2,7,bW,bH,7);ctx.fill();
+    ctx.strokeStyle=done?'rgba(56,189,248,0.1)':isCur?'rgba(56,189,248,0.9)':'rgba(56,189,248,0.28)';
+    ctx.lineWidth=isCur?1.8:1;
+    rrect(x-bW/2,7,bW,bH,7);ctx.stroke();
+    const fs=Math.min(11,bW*0.2);
+    ctx.font=`700 ${fs}px "Noto Sans KR",sans-serif`;
+    ctx.fillStyle=done?'rgba(180,210,255,0.28)':isCur?'#fff':'rgba(200,230,255,0.82)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    let label=name;
+    while(ctx.measureText(label).width>bW-(isComeback?22:10)&&label.length>1)label=label.slice(0,-1);
+    if(label!==name)label+='…';
+    ctx.fillText(label,x-(isComeback?5:0),7+bH/2);
+    if(isComeback){ctx.font=`10px sans-serif`;ctx.textAlign='right';ctx.fillText('🙅',x+bW/2-2,7+bH/2);}
+  });
+
+  // 하단 팀 슬롯
+  teamSlots.forEach((teamIdx,i)=>{
+    const t=teams[teamIdx];if(!t)return;
+    const x=colX(i),rgb=hexRgb(t.color);
+    const by=H-BOT_PAD+7;
+    ctx.fillStyle=`rgba(${rgb},0.13)`;rrect(x-bW/2,by,bW,bH,7);ctx.fill();
+    ctx.strokeStyle=`rgba(${rgb},0.42)`;ctx.lineWidth=1.5;rrect(x-bW/2,by,bW,bH,7);ctx.stroke();
+    const fs2=Math.min(11,bW*0.2);
+    ctx.font=`900 ${fs2}px "Black Han Sans",sans-serif`;
+    ctx.fillStyle=t.color;ctx.textAlign='center';ctx.textBaseline='middle';
+    let label=t.name;
+    while(ctx.measureText(label).width>bW-10&&label.length>1)label=label.slice(0,-1);
+    if(label!==t.name)label+='…';
+    ctx.fillText(label,x,by+bH/2);
+  });
+}
+
+// ══════════════════════════════════════
+// 애니메이션 루프
+// ══════════════════════════════════════
+const TRAIL_LEN=50;
+let rafId=null,lastTS=0;
+
+function gameLoop(ts){
+  rafId=requestAnimationFrame(gameLoop);
+  const rawDt=Math.min(ts-lastTS,50);lastTS=ts;
+  if(!animState)return;
+  updateAnim((rawDt/1000)*(skipMode?20:speedMult));
+  // draw
+  drawStatic(animState.nameIdx);
+  drawTrail();
+  drawDot();
+}
+
+function drawTrail(){
+  if(!animState||animState.trail.length<2)return;
+  const pts=animState.trail;
+  for(let i=1;i<pts.length;i++){
+    ctx.strokeStyle=`rgba(56,189,248,${(i/pts.length)*0.88})`;
+    ctx.lineWidth=3.5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(pts[i-1].x,pts[i-1].y);ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke();
+  }
+  const lp=pts[pts.length-1];
+  const grd=ctx.createRadialGradient(lp.x,lp.y,0,lp.x,lp.y,18);
+  grd.addColorStop(0,'rgba(56,189,248,0.45)');grd.addColorStop(1,'rgba(56,189,248,0)');
+  ctx.fillStyle=grd;ctx.beginPath();ctx.arc(lp.x,lp.y,18,0,Math.PI*2);ctx.fill();
+}
+
+function drawDot(){
+  if(!animState)return;
+  const{x,y,nameIdx}=animState;
+  ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#e0f7ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.stroke();
+  const name=names[nameIdx];
+  const label=name.length>5?name.slice(0,5)+'…':name;
+  ctx.font=`bold 11px "Noto Sans KR"`;
+  const tw=ctx.measureText(label).width+10;
+  ctx.fillStyle='rgba(4,8,15,0.82)';rrect(x-tw/2,y-30,tw,16,5);ctx.fill();
+  ctx.fillStyle='#38bdf8';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x,y-22);
+}
+
+// ══════════════════════════════════════
+// 애니메이션 업데이트
+// ══════════════════════════════════════
+function updateAnim(dt){
+  const st=animState;if(!st)return;
+  const path=paths[st.nameIdx];
+  if(!path||st.step>=path.length-1){arrivePlayer();return;}
+  const from=path[st.step],to=path[st.step+1];
+  const fx=colX(from.col),fy=rowY(from.row);
+  const tx=colX(to.col),ty=rowY(to.row);
+  const dist=Math.hypot(tx-fx,ty-fy)||1;
+  const spd=Math.max(80,dist*3);
+  st.segT+=dt*spd/dist;
+  if(st.segT>=1){
+    st.segT=0;st.step++;
+    st.x=tx;st.y=ty;
+    push(tx,ty);
+    const node=path[st.step];
+    if(node){
+      if(node.type==='right'||node.type==='left')sndTurn();
+      else if(node.type==='detour_go'){
+        showEvt('🔀','우회 발생!',names[st.nameIdx],'잠깐 옆으로 샜다가 돌아옵니다…',skipMode?250:1000);
+        sndEvent();
+      }
+      else if(node.type==='arrive'){arrivePlayer();return;}
+    }
+  }else{
+    st.x=lerp(fx,tx,ease(st.segT));
+    st.y=lerp(fy,ty,ease(st.segT));
+    push(st.x,st.y);
+    if(Math.random()<0.05)sndStep();
+  }
+}
+function push(x,y){if(!animState)return;animState.trail.push({x,y});if(animState.trail.length>TRAIL_LEN)animState.trail.shift();}
+
+// ══════════════════════════════════════
+// 이벤트 팝업
+// ══════════════════════════════════════
+let popTimer=null;
+function showEvt(icon,title,name,desc,dur){
+  const pop=document.getElementById('eventPopup');
+  document.getElementById('epIcon').textContent=icon;
+  document.getElementById('epTitle').textContent=title;
+  document.getElementById('epName').textContent=name;
+  document.getElementById('epDesc').textContent=desc;
+  pop.classList.add('show');
+  if(popTimer)clearTimeout(popTimer);
+  popTimer=setTimeout(()=>pop.classList.remove('show'),dur);
+}
+
+// ══════════════════════════════════════
+// 도착 처리
+// ══════════════════════════════════════
+// comeback 플래그: 이미 comeback 이벤트를 한 번 진행했는지 추적
+let comebackUsed=false;
+
+function arrivePlayer(){
+  if(!animState)return;
+  const{nameIdx,trail}=animState;
+  const path=paths[nameIdx];
+  const destCol=path[path.length-1].col;
+
+  // comeback 이벤트: 최초 1회, comebackNameIdx인 경우
+  if(nameIdx===comebackNameIdx&&!comebackUsed){
+    comebackUsed=true;
+    showEvt('🙅','나 지금 안할래!',names[nameIdx],'순서를 뒤로 미룹니다!',skipMode?400:1800);
+    sndEvent();
+    playerStates[nameIdx]={done:false};
+    // 재삽입
+    const minAt=1,maxAt=Math.max(1,playerQueue.length);
+    const at=minAt+Math.floor(Math.random()*(maxAt-minAt+1));
+    playerQueue.splice(at,0,nameIdx);
+    // 다음번엔 comeback 없이 경로 재계산
+    paths[nameIdx]=computePath(nameIdx,detourRows[nameIdx]??-1);
+    animState=null;
+    setTimeout(nextPlayer,skipMode?80:520);
+    return;
+  }
+
+  // 정상 완료
+  const teamIdx=teamSlots[destCol];
+  if(teams[teamIdx])teams[teamIdx].members.push(names[nameIdx]);
+  const fullTrail=path.map(nd=>({x:colX(nd.col),y:rowY(nd.row)}));
+  playerStates[nameIdx]={done:true,destCol,fullTrail};
+  sndArrive();
+  animState=null;
+  setTimeout(nextPlayer,skipMode?60:320);
+}
+
+// ══════════════════════════════════════
+// 큐 진행
+// ══════════════════════════════════════
+function nextPlayer(){
+  if(playerQueue.length===0){allDone=true;setTimeout(showFinalResult,skipMode?150:600);return;}
+  const ni=playerQueue.shift();
+  animState={nameIdx:ni,step:0,x:colX(ni),y:rowY(0),trail:[{x:colX(ni),y:rowY(0)}],segT:0};
+}
+
+// ══════════════════════════════════════
+// 최종 결과
+// ══════════════════════════════════════
+function showFinalResult(){
+  cancelAnimationFrame(rafId);
+  drawStatic(-1);
+  document.getElementById('resultGrid').innerHTML=teams.map((t,i)=>`
+    <div class="team-res-card" style="border-top-color:${t.color};animation-delay:${i*0.11}s">
+      <div class="trc-name" style="color:${t.color}">${t.name} <span style="font-size:11px;color:var(--muted)">(${t.members.length}명)</span></div>
+      ${t.members.map(m=>`<div class="trc-member">👤 ${m}</div>`).join('')}
+    </div>`).join('');
+  document.getElementById('resultOverlay').classList.add('show');
+  launchConfetti();sndFanfare();
+}
+
+function launchConfetti(){
+  const el=document.getElementById('gameArea');
+  const cols=['#38bdf8','#f97316','#a78bfa','#34d399','#fbbf24','#f472b6'];
+  for(let i=0;i<60;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');p.className='cf';
+      p.style.cssText=`left:${8+Math.random()*84}%;top:0;width:${5+Math.random()*7}px;height:${8+Math.random()*10}px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${1.3+Math.random()*1.5}s;animation-delay:${Math.random()*0.3}s;`;
+      el.appendChild(p);setTimeout(()=>p.remove(),3000);
+    },i*28);
+  }
+}
+
+// ══════════════════════════════════════
+// 시작
+// ══════════════════════════════════════
+function startGame(){
+  AC.resume();
+  document.getElementById('startOverlay').style.display='none';
+  document.getElementById('skipBtn').style.display='inline-block';
+  comebackUsed=false;
+  rebuildAll();
+  gameStarted=true;
+  lastTS=performance.now();
+  requestAnimationFrame(ts=>{lastTS=ts;gameLoop(ts);});
+  setTimeout(nextPlayer,500);
+}
+
+// 초기 그리기
+resizeCanvas();buildLayout();bars=buildBars();teamSlots=buildTeamSlots();drawStatic(-1);
+</script>
+</body>
+</html>
