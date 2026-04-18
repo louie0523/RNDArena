@@ -329,24 +329,31 @@ function draw(){
     }
 
     // 이름 배경
+    const isMobile=W<=768;
+    const _fontSize=isMobile?7:12;
+    const _charW=isMobile?5:8;
+    const _namePad=isMobile?8:18;
+    const _nameY=isMobile?-19:-36;
+    const _nameH=isMobile?11:20;
     ctx.fillStyle='rgba(0,0,0,0.8)';
-    const nw=h.name.length*8+18;
-    ctx.beginPath();ctx.roundRect(-nw/2,-36,nw,20,5);ctx.fill();
+    const nw=h.name.length*_charW+_namePad;
+    ctx.beginPath();ctx.roundRect(-nw/2,_nameY,nw,_nameH,4);ctx.fill();
     ctx.fillStyle=h.color;
-    ctx.font='bold 12px "Noto Sans KR"';
+    ctx.font=`bold ${_fontSize}px "Noto Sans KR"`;
     ctx.textAlign='center';ctx.textBaseline='top';
-    ctx.fillText(h.name.length>6?h.name.slice(0,5)+'…':h.name,0,-35);
+    ctx.fillText(h.name.length>6?h.name.slice(0,5)+'…':h.name,0,_nameY+1);
 
-    // 말 이모지 (크게)
-    ctx.font='24px serif';
+    // 말 이모지
+    const _emojiSize=isMobile?17:24;
+    ctx.font=`${_emojiSize}px serif`;
     ctx.textBaseline='middle';
     if(h.skillActive){
       for(let k=1;k<=3;k++){ctx.globalAlpha=0.25/k;ctx.fillText(h.emoji,-k*10,0);}
       ctx.globalAlpha=h.eventState==='sleep'?0.55:1;
     }
     ctx.fillText(h.eventState==='toilet'?'🚽':h.eventState==='sleep'?'😴':h.emoji,0,0);
-    if(h.eventState==='kick'){ctx.font='16px serif';ctx.fillText('💥',16,-10);}
-    if(h.skillActive){ctx.font='14px serif';ctx.fillText('⚡',16,-14);ctx.fillText('⚡',-16,-14);}
+    if(h.eventState==='kick'){ctx.font=`${isMobile?12:16}px serif`;ctx.fillText('💥',isMobile?12:16,isMobile?-7:-10);}
+    if(h.skillActive){ctx.font=`${isMobile?10:14}px serif`;ctx.fillText('⚡',isMobile?12:16,isMobile?-9:-14);ctx.fillText('⚡',isMobile?-12:-16,isMobile?-9:-14);}
 
     ctx.restore();
   });

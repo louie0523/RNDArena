@@ -17,7 +17,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 
 .bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
 
-/* ───── 광고: 상단 ───── */
+/* ── 광고: 상단 ── */
 .ad-top{
   background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);
   border-bottom:1px solid var(--border);
@@ -26,7 +26,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 }
 .ad-top-label{position:absolute;top:6px;left:12px;font-size:9px;color:#444;letter-spacing:3px;text-transform:uppercase;}
 
-/* ───── 광고: 사이드 고정 ───── */
+/* ── 광고: 사이드 고정 ── */
 .ad-side{
   position:fixed;top:50%;transform:translateY(-50%);
   width:160px;
@@ -39,24 +39,29 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .ad-side.left{left:6px;}.ad-side.right{right:6px;}
 .ad-side-label{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;}
 
-/* ───── 헤더 ───── */
+/* ── 헤더 ── */
 header{
   position:relative;z-index:10;
   padding:20px 200px;
   display:flex;align-items:center;justify-content:space-between;
   border-bottom:1px solid var(--border);
 }
-.logo{font-family:'Oswald',sans-serif;font-size:32px;font-weight:900;letter-spacing:4px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.logo em{-webkit-text-fill-color:var(--accent2);font-style:normal;}
+/* 로고: gradient 대신 solid yellow 적용 — 모바일 webkit 어둠 문제 해결 */
+.logo{
+  font-family:'Oswald',sans-serif;
+  font-size:32px;font-weight:900;letter-spacing:4px;
+  color:#f5c518;  /* fallback & 실제 색상 */
+}
+.logo em{color:var(--accent2);font-style:normal;}
 .header-sub{font-size:13px;color:var(--muted);}
 
-/* ───── 히어로 ───── */
+/* ── 히어로 ── */
 .hero{position:relative;z-index:10;text-align:center;padding:60px 200px 40px;}
 .hero-title{font-family:'Black Han Sans',sans-serif;font-size:52px;letter-spacing:3px;line-height:1.2;margin-bottom:16px;}
 .hero-title span{background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .hero-sub{font-size:16px;color:var(--muted);margin-bottom:40px;}
 
-/* ───── 참가자 입력 ───── */
+/* ── 참가자 입력 ── */
 .input-card{
   position:relative;z-index:10;
   background:var(--surface);border:1px solid var(--border);border-radius:16px;
@@ -100,51 +105,69 @@ textarea{resize:vertical;min-height:100px;}
 }
 .dl-btn:hover{border-color:var(--accent3);}
 
-/* ───── 테마 카드 그리드 ───── */
-.themes-grid{
+/* ══════════════════════════════
+   게임 패널 그리드 (통합)
+══════════════════════════════ */
+.games-section{
+  max-width:1100px;margin:0 auto 16px;
   position:relative;z-index:10;
-  display:grid;grid-template-columns:repeat(2,1fr);gap:20px;
-  max-width:1100px;margin:0 auto;padding:0 200px 60px;
+  padding:0 200px;
 }
-.theme-card{
+.section-label-h{
+  font-family:'Black Han Sans',sans-serif;font-size:14px;
+  letter-spacing:3px;color:var(--muted);text-transform:uppercase;
+  margin-bottom:14px;
+}
+.games-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+
+/* 게임 패널 카드 — 모자/사다리와 동일한 스타일 */
+.game-panel{
   background:var(--surface);border:2px solid var(--border);border-radius:20px;
-  padding:32px 24px;cursor:pointer;transition:all .3s;
+  padding:26px 20px 22px;cursor:pointer;transition:all .3s;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
   position:relative;overflow:hidden;
 }
-.theme-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
-.theme-card:hover{transform:translateY(-4px);}
-.theme-card:hover::before{opacity:1;}
-.tc-ball::before{background:radial-gradient(ellipse at top,rgba(0,229,255,.08),transparent);}
-.tc-horse::before{background:radial-gradient(ellipse at top,rgba(100,200,50,.08),transparent);}
-.tc-battle::before{background:radial-gradient(ellipse at top,rgba(255,77,77,.08),transparent);}
-.tc-colosseum::before{background:radial-gradient(ellipse at top,rgba(245,197,24,.08),transparent);}
-.tc-roulette::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
-.tc-ladder::before{background:radial-gradient(ellipse at top,rgba(56,189,248,.08),transparent);}
-.tc-icon{font-size:48px;margin-bottom:12px;}
-.tc-title{font-family:'Black Han Sans',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:8px;}
-.tc-desc{font-size:13px;color:var(--muted);line-height:1.6;}
-.tc-badge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:20px;margin-top:10px;letter-spacing:1px;font-weight:700;}
+.game-panel::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.game-panel:hover{transform:translateY(-4px);}
+.game-panel:hover::before{opacity:1;}
+
+/* 색상 테마별 */
+.gp-ball{border-color:rgba(0,229,255,.3);}
+.gp-ball::before{background:radial-gradient(ellipse at top,rgba(0,229,255,.08),transparent);}
+.gp-ball:hover{border-color:var(--accent3);box-shadow:0 0 28px rgba(0,229,255,.14);}
+
+.gp-horse{border-color:rgba(100,200,50,.3);}
+.gp-horse::before{background:radial-gradient(ellipse at top,rgba(100,200,50,.08),transparent);}
+.gp-horse:hover{border-color:#64c832;box-shadow:0 0 28px rgba(100,200,50,.14);}
+
+.gp-battle{border-color:rgba(255,77,77,.3);}
+.gp-battle::before{background:radial-gradient(ellipse at top,rgba(255,77,77,.08),transparent);}
+.gp-battle:hover{border-color:var(--accent2);box-shadow:0 0 28px rgba(255,77,77,.14);}
+
+.gp-colosseum{border-color:rgba(245,197,24,.3);}
+.gp-colosseum::before{background:radial-gradient(ellipse at top,rgba(245,197,24,.08),transparent);}
+.gp-colosseum:hover{border-color:var(--accent);box-shadow:0 0 28px rgba(245,197,24,.14);}
+
+.gp-roulette{border-color:rgba(200,100,255,.3);}
+.gp-roulette::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
+.gp-roulette:hover{border-color:#c864ff;box-shadow:0 0 28px rgba(200,100,255,.14);}
+
+.gp-icon{font-size:40px;line-height:1;}
+.gp-title{font-family:'Black Han Sans',sans-serif;font-size:20px;letter-spacing:2px;margin-top:4px;}
+.gp-desc{font-size:12px;color:var(--muted);line-height:1.6;flex:1;}
+.gp-badge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:20px;margin-top:8px;letter-spacing:1px;font-weight:700;}
 .badge-blue{background:rgba(0,229,255,.15);color:var(--accent3);}
 .badge-green{background:rgba(100,200,50,.15);color:#64c832;}
 .badge-red{background:rgba(255,77,77,.15);color:var(--accent2);}
 .badge-gold{background:rgba(245,197,24,.15);color:var(--accent);}
 .badge-purple{background:rgba(200,100,255,.15);color:#c864ff;}
-
-.theme-card-border-ball{border-color:rgba(0,229,255,.3);}
-.theme-card-border-ball:hover{border-color:var(--accent3);box-shadow:0 0 30px rgba(0,229,255,.15);}
-.theme-card-border-horse{border-color:rgba(100,200,50,.3);}
-.theme-card-border-horse:hover{border-color:#64c832;box-shadow:0 0 30px rgba(100,200,50,.15);}
-.theme-card-border-battle{border-color:rgba(255,77,77,.3);}
-.theme-card-border-battle:hover{border-color:var(--accent2);box-shadow:0 0 30px rgba(255,77,77,.15);}
-.theme-card-border-colosseum{border-color:rgba(245,197,24,.3);}
-.theme-card-border-colosseum:hover{border-color:var(--accent);box-shadow:0 0 30px rgba(245,197,24,.15);}
-.theme-card-border-roulette{border-color:rgba(200,100,255,.3);}
-.theme-card-border-ladder{border-color:rgba(56,189,248,.3);}
-.theme-card-border-ladder:hover{border-color:#38bdf8;box-shadow:0 0 30px rgba(56,189,248,.15);}
 .badge-cyan{background:rgba(56,189,248,.15);color:#38bdf8;}
-.theme-card-border-roulette:hover{border-color:#c864ff;box-shadow:0 0 30px rgba(200,100,255,.15);}
 
-/* ───── 팀 나누기 ───── */
+/* ── 팀 나누기 + 팀 도구 통합 ── */
 .team-section{max-width:700px;margin:0 auto 40px;position:relative;z-index:10;padding:0 200px;}
 .section-label{font-family:'Black Han Sans',sans-serif;font-size:14px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;}
 .team-toggle{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
@@ -177,7 +200,35 @@ textarea{resize:vertical;min-height:100px;}
 }
 .team-start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,197,24,.4);}
 
-/* ───── 모달 ───── */
+/* 팀 배정 도구 패널 */
+.team-tools-section{
+  max-width:1100px;margin:0 auto 40px;position:relative;z-index:10;padding:0 200px;
+}
+.team-tools-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+}
+.tool-panel{
+  background:var(--surface);border:2px solid var(--border);border-radius:20px;
+  padding:26px 20px 22px;cursor:pointer;transition:all .3s;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  position:relative;overflow:hidden;
+}
+.tool-panel::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.tool-panel:hover{transform:translateY(-4px);}
+.tool-panel:hover::before{opacity:1;}
+.tp-hat{border-color:rgba(200,100,255,.3);}
+.tp-hat::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
+.tp-hat:hover{border-color:#c864ff;box-shadow:0 0 28px rgba(200,100,255,.14);}
+.tp-ladder{border-color:rgba(56,189,248,.3);}
+.tp-ladder::before{background:radial-gradient(ellipse at top,rgba(56,189,248,.08),transparent);}
+.tp-ladder:hover{border-color:#38bdf8;box-shadow:0 0 28px rgba(56,189,248,.14);}
+.tp-icon{font-size:40px;line-height:1;}
+.tp-title{font-family:'Black Han Sans',sans-serif;font-size:20px;letter-spacing:2px;}
+.tp-hat .tp-title{color:#c864ff;}
+.tp-ladder .tp-title{color:#38bdf8;}
+.tp-desc{font-size:12px;color:var(--muted);line-height:1.6;flex:1;}
+
+/* ── 모달 ── */
 .modal-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.85);
   z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;
@@ -204,7 +255,7 @@ textarea{resize:vertical;min-height:100px;}
 }
 .modal-close:hover{color:var(--text);border-color:#666;}
 
-/* ───── 하단 광고 ───── */
+/* ── 하단 광고 ── */
 .ad-bottom{
   background:linear-gradient(90deg,#0d0d20,#141428,#0d0d20);
   border-top:1px solid var(--border);border-bottom:1px solid var(--border);
@@ -212,7 +263,7 @@ textarea{resize:vertical;min-height:100px;}
   position:relative;z-index:10;
 }
 
-/* ───── 모바일용 하단 고정 광고 배너 ───── */
+/* ── 모바일 하단 고정 광고 ── */
 .ad-mobile-bottom{
   display:none;
   position:fixed;bottom:0;left:0;right:0;
@@ -224,7 +275,7 @@ textarea{resize:vertical;min-height:100px;}
 }
 .ad-mobile-label{position:absolute;top:4px;left:8px;font-size:8px;color:#444;letter-spacing:2px;text-transform:uppercase;}
 
-/* ───── 푸터 ───── */
+/* ── 푸터 ── */
 footer{
   border-top:1px solid var(--border);
   padding:28px 200px;
@@ -233,92 +284,45 @@ footer{
   position:relative;z-index:10;
 }
 
-/* ───── 팀 배정 도구 패널 ───── */
-.team-tools-section{
-  max-width:1100px;margin:0 auto 40px;position:relative;z-index:10;padding:0 200px;
-}
-.team-tools-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:16px;
-}
-.tool-panel{
-  background:var(--surface);border:2px solid var(--border);border-radius:20px;
-  padding:28px 20px;cursor:pointer;transition:all .3s;
-  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
-  position:relative;overflow:hidden;
-}
-.tool-panel::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
-.tool-panel:hover{transform:translateY(-4px);}
-.tool-panel:hover::before{opacity:1;}
-.tp-hat{border-color:rgba(200,100,255,.3);}
-.tp-hat::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
-.tp-hat:hover{border-color:#c864ff;box-shadow:0 0 30px rgba(200,100,255,.15);}
-.tp-ladder{border-color:rgba(56,189,248,.3);}
-.tp-ladder::before{background:radial-gradient(ellipse at top,rgba(56,189,248,.08),transparent);}
-.tp-ladder:hover{border-color:#38bdf8;box-shadow:0 0 30px rgba(56,189,248,.15);}
-.tp-icon{font-size:44px;}
-.tp-title{font-family:'Black Han Sans',sans-serif;font-size:20px;letter-spacing:2px;}
-.tp-hat .tp-title{color:#c864ff;}
-.tp-ladder .tp-title{color:#38bdf8;}
-.tp-desc{font-size:13px;color:var(--muted);line-height:1.6;}
-
-/* ───── 광고 배너 패딩 ───── */
-.ad-top{padding:12px 0;}
-.ad-bottom{padding:12px 0;}
-
-/* ═══════════════════════════════════════
-   반응형 브레이크포인트
-═══════════════════════════════════════ */
-
-/* ─ 1400px 이하: 사이드 광고 숨김 ─ */
+/* ═════════════════════════════
+   반응형
+═════════════════════════════ */
 @media(max-width:1400px){
   .ad-side{display:none;}
   header{padding:20px 24px;}
   .hero{padding:48px 24px 32px;}
-  .themes-grid{padding:0 24px 48px;}
+  .games-section{padding:0 24px;}
   .team-section{padding:0 24px;}
   .team-tools-section{padding:0 24px;}
   footer{padding:24px;}
 }
 
-/* ─ 900px 이하: 태블릿 ─ */
 @media(max-width:900px){
   header{padding:16px 20px;}
   .hero{padding:36px 20px 24px;}
   .hero-title{font-size:40px;}
-  .themes-grid{padding:0 20px 40px;gap:16px;}
-  .tc-icon{font-size:40px;margin-bottom:10px;}
-  .tc-title{font-size:20px;}
+  .games-section{padding:0 20px;}
+  .games-grid{grid-template-columns:repeat(2,1fr);gap:14px;}
   .input-card{margin:0 20px 20px;}
   .team-section{padding:0 20px !important;}
   .team-tools-section{padding:0 20px !important;}
   footer{padding:20px;}
 }
 
-/* ─ 600px 이하: 모바일 ─ */
 @media(max-width:600px){
-
-  /* 사이드 광고 완전 숨김 */
   .ad-side{display:none !important;}
-
-  /* 하단 고정 광고 표시 */
   .ad-mobile-bottom{display:flex;}
-  /* 하단 고정 광고 높이만큼 body 패딩 */
   body{padding-bottom:60px;}
-
-  /* 상단 광고 높이 줄이기 */
   .ad-top{height:56px;}
 
-  /* 헤더 */
   header{padding:12px 16px;}
-  .logo{font-size:22px;letter-spacing:2px;}
+  .logo{font-size:20px;letter-spacing:2px;}
   .header-sub{font-size:11px;}
 
-  /* 히어로 */
-  .hero{padding:24px 16px 18px;}
-  .hero-title{font-size:28px;letter-spacing:1px;}
-  .hero-sub{font-size:13px;margin-bottom:20px;}
+  .hero{padding:22px 16px 16px;}
+  .hero-title{font-size:26px;letter-spacing:1px;}
+  .hero-sub{font-size:12px;margin-bottom:18px;}
 
-  /* 참가자 입력 */
   .input-card{margin:0 12px 16px;padding:16px 14px;border-radius:12px;}
   .input-card-title{font-size:14px;margin-bottom:12px;}
   .input-tabs{gap:6px;margin-bottom:12px;}
@@ -328,23 +332,20 @@ footer{
   .pass-row{gap:8px;}
   .pass-row label{font-size:12px;}
 
-  /* 테마 카드 — 모바일: 2열 유지, 룰렛만 1열 span */
-  .themes-grid{
+  /* 게임 패널 모바일: 2열 */
+  .games-section{padding:0 12px;}
+  .games-grid{
     grid-template-columns:repeat(2,1fr);
-    padding:0 12px 32px;
     gap:10px;
   }
-  /* 룰렛 카드 — 모바일에서도 전체 폭 */
-  .themes-grid .tc-roulette-card{grid-column:span 2;}
+  .game-panel{padding:14px 12px 12px;border-radius:14px;gap:5px;}
+  .gp-icon{font-size:26px;}
+  .gp-title{font-size:14px;letter-spacing:1px;margin-top:2px;}
+  .gp-desc{font-size:11px;}
+  .gp-badge{font-size:9px;padding:2px 8px;margin-top:4px;}
 
-  .theme-card{padding:16px 12px;border-radius:14px;}
-  .tc-icon{font-size:30px;margin-bottom:6px;}
-  .tc-title{font-size:15px;letter-spacing:1px;margin-bottom:5px;}
-  .tc-desc{font-size:11px;line-height:1.5;color:#888;}
-  .tc-badge{font-size:9px;padding:2px 8px;margin-top:6px;}
-
-  /* 팀 나누기 */
-  .team-section{padding:0 12px !important;margin-bottom:28px;}
+  /* 팀 섹션 */
+  .team-section{padding:0 12px !important;margin-bottom:24px;}
   .section-label{font-size:12px;letter-spacing:2px;}
   .team-setup{padding:16px 12px;}
   .team-row{gap:6px;}
@@ -353,6 +354,14 @@ footer{
   .add-team-btn{font-size:12px;padding:7px;}
   .team-start-btn{font-size:16px;padding:12px;}
 
+  /* 팀 도구 */
+  .team-tools-section{padding:0 12px !important;margin-bottom:28px;}
+  .team-tools-grid{gap:10px;}
+  .tool-panel{padding:14px 12px 12px;border-radius:14px;gap:5px;}
+  .tp-icon{font-size:26px;}
+  .tp-title{font-size:14px;letter-spacing:1px;}
+  .tp-desc{font-size:11px;}
+
   /* 모달 */
   .modal{padding:20px 16px;border-radius:16px;}
   .modal-title{font-size:22px;margin-bottom:16px;}
@@ -360,18 +369,7 @@ footer{
   .team-card-name{font-size:13px;}
   .team-card-member{font-size:12px;}
 
-  /* 팀 배정 도구 */
-  .team-tools-section{padding:0 12px !important;margin-bottom:28px;}
-  .team-tools-grid{gap:10px;}
-  .tool-panel{padding:16px 14px;border-radius:14px;}
-  .tp-icon{font-size:32px;}
-  .tp-title{font-size:16px;}
-  .tp-desc{font-size:11px;}
-
-  /* 하단 광고 */
   .ad-bottom{height:56px;}
-
-  /* 푸터 */
   footer{
     padding:16px 12px 20px;
     flex-direction:column;align-items:center;
@@ -382,14 +380,14 @@ footer{
   footer>div:last-child{font-size:11px;}
 }
 
-/* ─ 400px 이하: 소형 모바일 ─ */
 @media(max-width:400px){
-  .hero-title{font-size:24px;}
-  .themes-grid{gap:8px;}
-  .tc-icon{font-size:26px;}
-  .tc-title{font-size:14px;}
-  .tc-desc{display:none;}  /* 너무 좁으면 설명 숨김 */
-  .tc-badge{display:none;}
+  .hero-title{font-size:22px;}
+  .games-grid{gap:8px;}
+  .gp-icon{font-size:22px;}
+  .gp-title{font-size:13px;}
+  .gp-desc{display:none;}
+  .gp-badge{display:none;}
+  .tp-desc{display:none;}
 }
 </style>
 </head>
@@ -403,11 +401,10 @@ footer{
     data-ad-unit="DAN-PJse5rx0E3OW79XA"
     data-ad-width="728"
     data-ad-height="90"></ins>
-  <script type="text/javascript"
-    src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+  <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 
-<!-- 광고: 사이드 (데스크톱 고정) -->
+<!-- 광고: 사이드 -->
 <div class="ad-side left">
   <div class="ad-side-label">advertisement</div>
   <ins class="kakao_ad_area" style="display:none;"
@@ -425,7 +422,7 @@ footer{
   <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </div>
 
-<!-- 광고: 모바일 하단 고정 배너 -->
+<!-- 광고: 모바일 하단 고정 -->
 <div class="ad-mobile-bottom">
   <div class="ad-mobile-label">advertisement</div>
   <ins class="kakao_ad_area" style="display:none;"
@@ -487,38 +484,46 @@ footer{
   </div>
 </div>
 
-<!-- 테마 카드 -->
-<div class="themes-grid">
-  <div class="theme-card tc-ball theme-card-border-ball" onclick="go('ball')">
-    <div class="tc-icon">🎱</div>
-    <div class="tc-title" style="color:var(--accent3)">핀볼</div>
-    <div class="tc-desc">공이 장애물을 튕기며 내려와 먼저 도착한 순으로 순위 결정!</div>
-    <div class="tc-badge badge-blue">공들의 파도!</div>
-  </div>
-  <div class="theme-card tc-horse theme-card-border-horse" onclick="go('horse')">
-    <div class="tc-icon">🏇</div>
-    <div class="tc-title" style="color:#64c832">경마</div>
-    <div class="tc-desc">트랙을 달리는 말들! 당신의 말을 응원하세요!</div>
-    <div class="tc-badge badge-green">변칙적인 말들!</div>
-  </div>
-  <div class="theme-card tc-battle theme-card-border-battle" onclick="go('battle')">
-    <div class="tc-icon">⚔️</div>
-    <div class="tc-title" style="color:var(--accent2)">배틀로얄</div>
-    <div class="tc-desc">낙하산 강하! 각자 아이템을 줍고 전투하며 생존자를 결정합니다!</div>
-    <div class="tc-badge badge-red">보급품을 주의하세요!</div>
-  </div>
-  <div class="theme-card tc-colosseum theme-card-border-colosseum" onclick="go('colosseum')">
-    <div class="tc-icon">🏟️</div>
-    <div class="tc-title" style="color:var(--accent)">콜로세움</div>
-    <div class="tc-desc">턴제 1대1 대결! 창·롱소드·레이피어·도끼·방패 무작위 조합으로 토너먼트 진행!</div>
-    <div class="tc-badge badge-gold">정정당당한 결투!</div>
-  </div>
-  <!-- 룰렛: 모바일에서도 full-width -->
-  <div class="theme-card tc-roulette theme-card-border-roulette tc-roulette-card" onclick="go('roulette')" style="grid-column:span 2;">
-    <div class="tc-icon">🎡</div>
-    <div class="tc-title" style="color:#c864ff">룰렛</div>
-    <div class="tc-desc">화려한 룰렛 바퀴를 직접 돌려 한 명씩 뽑기! 스핀할수록 줄어드는 참가자로 순위 결정!</div>
-    <div class="tc-badge badge-purple">깔롱한 롤렛!</div>
+<!-- 게임 패널 (핀볼·경마·배틀·콜로세움·룰렛) -->
+<div class="games-section" style="margin-bottom:16px;">
+  <div class="section-label-h">🎮 게임 선택</div>
+  <div class="games-grid">
+
+    <div class="game-panel gp-ball" onclick="go('ball')">
+      <div class="gp-icon">🎱</div>
+      <div class="gp-title" style="color:var(--accent3)">핀볼</div>
+      <div class="gp-desc">공이 장애물을 튕기며 내려와 도착 순으로 순위 결정!</div>
+      <div class="gp-badge badge-blue">공들의 파도!</div>
+    </div>
+
+    <div class="game-panel gp-horse" onclick="go('horse')">
+      <div class="gp-icon">🏇</div>
+      <div class="gp-title" style="color:#64c832">경마</div>
+      <div class="gp-desc">트랙을 달리는 말들! 당신의 말을 응원하세요!</div>
+      <div class="gp-badge badge-green">변칙적인 말들!</div>
+    </div>
+
+    <div class="game-panel gp-battle" onclick="go('battle')">
+      <div class="gp-icon">⚔️</div>
+      <div class="gp-title" style="color:var(--accent2)">배틀로얄</div>
+      <div class="gp-desc">낙하산 강하 후 아이템 전투, 마지막 생존자 결정!</div>
+      <div class="gp-badge badge-red">보급품을 주의하세요!</div>
+    </div>
+
+    <div class="game-panel gp-colosseum" onclick="go('colosseum')">
+      <div class="gp-icon">🏟️</div>
+      <div class="gp-title" style="color:var(--accent)">콜로세움</div>
+      <div class="gp-desc">턴제 1대1 대결! 무기 랜덤 조합 토너먼트!</div>
+      <div class="gp-badge badge-gold">정정당당한 결투!</div>
+    </div>
+
+    <div class="game-panel gp-roulette" onclick="go('roulette')" style="grid-column:span 2;">
+      <div class="gp-icon">🎡</div>
+      <div class="gp-title" style="color:#c864ff">룰렛</div>
+      <div class="gp-desc">화려한 룰렛 바퀴를 직접 돌려 한 명씩 뽑기! 스핀할수록 줄어드는 참가자!</div>
+      <div class="gp-badge badge-purple">깔롱한 룰렛!</div>
+    </div>
+
   </div>
 </div>
 
@@ -535,32 +540,29 @@ footer{
       <input type="checkbox" id="useLimit" style="width:auto;accent-color:var(--accent);flex-shrink:0;"> 팀별 최대 인원 설정 사용 (초과 인원은 균등 배분)
     </label>
     <button class="team-start-btn" onclick="startTeam()">👥 팀 나누기 (기본)</button>
-    <!-- <button class="team-start-btn" onclick="startSorting()" style="margin-top:10px;background:linear-gradient(135deg,#c084fc,#a855f7);box-shadow:0 0 20px rgba(192,132,252,.25);">🎩 마법의 모자로 팀 배정!</button> -->
   </div>
 </div>
 
-<!-- 팀 배정 도구 패널 -->
+<!-- 팀 배정 미니게임 -->
 <div class="team-tools-section">
   <div class="section-label" style="text-align:center;margin-bottom:16px;">🎮 팀 배정 미니게임</div>
   <div class="team-tools-grid">
-    <!-- 마법의 모자 -->
     <div class="tool-panel tp-hat" onclick="startSorting()">
       <div class="tp-icon">🎩</div>
       <div class="tp-title">마법의 모자</div>
-      <div class="tp-desc">마법적인 팀 배정! 모자가 한 명씩 호명하며 극적으로 팀을 나눕니다.</div>
-      <div class="tc-badge badge-purple" style="margin-top:auto;">너무 상처받지 마세요!</div>
+      <div class="tp-desc">모자가 한 명씩 호명하며 극적으로 팀을 나눕니다.</div>
+      <div class="gp-badge badge-purple" style="margin-top:auto;">너무 상처받지 마세요!</div>
     </div>
-    <!-- 변칙 사다리 -->
     <div class="tool-panel tp-ladder" onclick="goTeam('ladder')">
       <div class="tp-icon">📐</div>
       <div class="tp-title">변칙 사다리타기</div>
-      <div class="tp-desc">꼬인 사다리를 타고 내려와 팀 결정! 유턴·순서 미루기 등 변칙 이벤트로 예측불허!</div>
-      <div class="tc-badge badge-cyan" style="margin-top:auto;">예상할 수 있을까요?</div>
+      <div class="tp-desc">꼬인 사다리를 타고 내려와 팀 결정! 변칙 이벤트로 예측불허!</div>
+      <div class="gp-badge badge-cyan" style="margin-top:auto;">예상할 수 있을까요?</div>
     </div>
   </div>
 </div>
 
-<!-- 광고: 하단 배너 -->
+<!-- 하단 광고 -->
 <div class="ad-bottom">
   <div class="ad-top-label">advertisement</div>
   <ins class="kakao_ad_area" style="display:none;"
@@ -571,7 +573,7 @@ footer{
 </div>
 
 <footer>
-  <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">RANDOM ARENA</div>
+  <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:#f5c518;">RANDOM ARENA</div>
   <div class="footer-links" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
     <a href="mailto:louie07230723@gmail.com"
       style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid rgba(255,255,255,0.07);padding:5px 14px;border-radius:20px;transition:all .2s;"
@@ -602,24 +604,19 @@ footer{
 const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
 let inputMode='name', teams=[], fileNames=[];
 
-/* 배경 별 파티클 */
 const bgCanvas=document.getElementById('bgCanvas');
 const bctx=bgCanvas.getContext('2d');
 function resizeBg(){bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;}
 resizeBg();
 window.addEventListener('resize',resizeBg);
 const stars=Array.from({length:80},()=>({
-  x:Math.random()*window.innerWidth,
-  y:Math.random()*window.innerHeight,
-  r:Math.random()*1.5+.3,
-  speed:Math.random()*.3+.1,
-  opacity:Math.random()
+  x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+  r:Math.random()*1.5+.3,speed:Math.random()*.3+.1,opacity:Math.random()
 }));
 function drawBg(){
   bctx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
   stars.forEach(s=>{
-    s.y-=s.speed;
-    if(s.y<0){s.y=bgCanvas.height;s.x=Math.random()*bgCanvas.width;}
+    s.y-=s.speed;if(s.y<0){s.y=bgCanvas.height;s.x=Math.random()*bgCanvas.width;}
     s.opacity+=.01;if(s.opacity>1)s.opacity=0;
     bctx.beginPath();bctx.arc(s.x,s.y,s.r,0,Math.PI*2);
     bctx.fillStyle=`rgba(200,200,255,${s.opacity*.4})`;bctx.fill();
@@ -628,7 +625,6 @@ function drawBg(){
 }
 drawBg();
 
-/* 탭 전환 */
 function setIM(m,el){
   inputMode=m;
   ['name','num','file'].forEach(x=>document.getElementById(`im-${x}`).style.display=x===m?'block':'none');
@@ -636,15 +632,12 @@ function setIM(m,el){
   el.classList.add('active');
 }
 
-/* 이름 파싱 */
 function parseNames(raw){return raw.split(/[\n,，、]+/).map(s=>s.trim()).filter(s=>s);}
-
 function previewNames(){
   const names=parseNames(document.getElementById('namesTA').value);
   document.getElementById('nameTags').innerHTML=names.map(n=>`<div class="ntag">${n}</div>`).join('');
 }
 
-/* 파일 업로드 */
 function loadFile(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
@@ -655,65 +648,47 @@ function loadFile(e){
   r.readAsText(f,'UTF-8');
 }
 
-/* CSV 다운로드 */
 function dlFile(){
   const names=parseNames(document.getElementById('makeTA').value);if(!names.length)return;
   const blob=new Blob(['\uFEFF'+names.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='participants.csv';a.click();
 }
 
-/* 합격/탈락 토글 */
 function togglePass(){
   const pd=document.getElementById('passDetail');
   if(document.getElementById('usePass').checked){pd.classList.add('show');}
   else{pd.classList.remove('show');}
 }
 
-/* 참가자 가져오기 */
 function getParticipants(){
   if(inputMode==='name') return parseNames(document.getElementById('namesTA').value);
-  if(inputMode==='num'){
-    const n=parseInt(document.getElementById('totalNum').value)||0;
-    return Array.from({length:n},(_,i)=>`${i+1}번`);
-  }
+  if(inputMode==='num'){const n=parseInt(document.getElementById('totalNum').value)||0;return Array.from({length:n},(_,i)=>`${i+1}번`);}
   if(inputMode==='file') return fileNames;
   return [];
 }
 function getConfig(){
-  return {
-    usePass:document.getElementById('usePass').checked,
-    passN:parseInt(document.getElementById('passN').value)||3
-  };
+  return{usePass:document.getElementById('usePass').checked,passN:parseInt(document.getElementById('passN').value)||3};
 }
 
-/* 게임 이동 */
 function go(theme){
   const p=getParticipants();
   if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
   const cfg=getConfig();
   const params=new URLSearchParams({names:p.join(','),usePass:cfg.usePass,passN:cfg.passN});
-  window.open(`${theme}.html?${params.toString()}`, '_blank');
+  window.open(`${theme}.html?${params.toString()}`,'_blank');
 }
 
-/* 팀 배정 게임 이동 (팀 설정 자동 포함) */
 function goTeam(theme){
   const p=getParticipants();
   if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
   if(teams.length<2){alert('팀을 2개 이상 설정하세요!');return;}
   const teamsData=teams.map(t=>({name:t.name,color:t.color}));
-  const params=new URLSearchParams({
-    names:p.join(','),
-    teams:encodeURIComponent(JSON.stringify(teamsData))
-  });
+  const params=new URLSearchParams({names:p.join(','),teams:encodeURIComponent(JSON.stringify(teamsData))});
   window.open(`${theme}.html?${params.toString()}`,'_blank');
 }
 
-/* 팀 나누기 */
 function initTeams(){
-  teams=[
-    {name:'A팀',color:COLORS[0],max:''},
-    {name:'B팀',color:COLORS[1],max:''}
-  ];
+  teams=[{name:'A팀',color:COLORS[0],max:''},{name:'B팀',color:COLORS[1],max:''}];
   renderTeams();
 }
 function addTeam(){
@@ -723,8 +698,7 @@ function addTeam(){
 }
 function delTeam(i){
   if(teams.length<=2)return;
-  teams.splice(i,1);
-  renderTeams();
+  teams.splice(i,1);renderTeams();
 }
 function renderTeams(){
   document.getElementById('teamRows').innerHTML=teams.map((t,i)=>`
@@ -747,28 +721,11 @@ function startTeam(){
   const result=teams.map(t=>({...t,members:[]}));
   if(useLimit){
     let pool=[...shuffled];
-    result.forEach(t=>{
-      const max=parseInt(t.max)||Infinity;
-      const take=Math.min(max,pool.length);
-      t.members=pool.splice(0,take);
-    });
-    // 남은 인원 균등분배
-    while(pool.length>0){
-      const min=result.reduce((a,b)=>a.members.length<=b.members.length?a:b);
-      min.members.push(pool.shift());
-    }
+    result.forEach(t=>{const max=parseInt(t.max)||Infinity;const take=Math.min(max,pool.length);t.members=pool.splice(0,take);});
+    while(pool.length>0){const min=result.reduce((a,b)=>a.members.length<=b.members.length?a:b);min.members.push(pool.shift());}
   } else {
-    // 완전 균등 분배: base명 + 나머지는 앞 팀부터 1명씩 추가
-    const total=shuffled.length;
-    const tCount=result.length;
-    const base=Math.floor(total/tCount);
-    const extra=total%tCount;
-    let idx=0;
-    result.forEach((t,i)=>{
-      const cnt=base+(i<extra?1:0);
-      t.members=shuffled.slice(idx,idx+cnt);
-      idx+=cnt;
-    });
+    const total=shuffled.length,tCount=result.length,base=Math.floor(total/tCount),extra=total%tCount;
+    let idx=0;result.forEach((t,i)=>{const cnt=base+(i<extra?1:0);t.members=shuffled.slice(idx,idx+cnt);idx+=cnt;});
   }
   document.getElementById('teamResultGrid').innerHTML=result.map(t=>`
     <div class="team-card" style="border-color:${t.color}">
@@ -777,26 +734,15 @@ function startTeam(){
     </div>`).join('');
   document.getElementById('teamModal').classList.add('open');
 }
-/* 마법의 모자 팀 배정 */
 function startSorting(){
   const p=getParticipants();
   if(p.length<2){alert('참가자를 2명 이상 입력하세요!');return;}
   if(teams.length<2){alert('팀을 2개 이상 설정하세요!');return;}
   const teamsData=teams.map(t=>({name:t.name,color:t.color}));
-  const params=new URLSearchParams({
-    names:p.join(','),
-    teams:encodeURIComponent(JSON.stringify(teamsData))
-  });
+  const params=new URLSearchParams({names:p.join(','),teams:encodeURIComponent(JSON.stringify(teamsData))});
   window.open(`sorting.html?${params.toString()}`,'_blank');
 }
-
-function shuffle(a){
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 initTeams();
 </script>

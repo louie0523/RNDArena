@@ -107,7 +107,7 @@ header{
 // URL 파라미터
 // ══════════════════════════════════════
 const params=new URLSearchParams(location.search);
-const names=params.get('names')?params.get('names').split(',').filter(Boolean):['1번','2번','3번','4번','5번','6번'];
+const names=params.get('names')?params.get('names').split(',').filter(Boolean):['철수','영희','민준','지수','태양','현우'];
 const N=names.length;
 const teamParam=params.get('teams');
 let teams=[];
@@ -118,7 +118,7 @@ if(!teams.length){
 }
 const TEAM_N=teams.length;
 teams.forEach(t=>{t.members=[];});
-document.getElementById('pInfo').innerHTML=`참가자 ${N}명 · ${TEAM_N}개 팀<br>꼬여있는 사다리를 타고 팀이 결정됩니다!<br><span style="font-size:11px;color:#3d5a78">⚡ 가끔 변칙 이벤트가 발생할 수 있어요</span>`;
+document.getElementById('pInfo').innerHTML=`참가자 ${N}명 · ${TEAM_N}개 팀<br>이름을 클릭하면 사다리를 탑니다!<br><span style="font-size:11px;color:#3d5a78">👆 여러 명 동시에 클릭 가능 · ⚡ 가끔 변칙 이벤트 발생</span>`;
 
 // ══════════════════════════════════════
 // 배경
@@ -150,7 +150,12 @@ let skipMode=false;
 const SL=['','','','보통','보통','빠르게','빠르게','매우빠름','매우빠름'];
 function updateSpeed(v){speedMult=parseInt(v);document.getElementById('speedLabel').textContent=SL[speedMult]||'보통';}
 updateSpeed(4);
-function doSkip(){skipMode=true;speedMult=20;document.getElementById('eventPopup').classList.remove('show');document.getElementById('speedRange').value=8;document.getElementById('speedLabel').textContent='스킵';}
+function doSkip(){
+  skipMode=true;speedMult=20;
+  document.getElementById('eventPopup').classList.remove('show');
+  document.getElementById('speedRange').value=8;
+  document.getElementById('speedLabel').textContent='스킵';
+}
 
 // ══════════════════════════════════════
 // 캔버스
@@ -170,13 +175,14 @@ let layout={};
 let bars=[];
 let teamSlots=[];
 let paths=[];
-let playerStates=[];
-let playerQueue=[];
-let animState=null;
-let gameStarted=false;
-let allDone=false;
+let playerStates=[];   // 각 nameIdx 상태: null | {done,destCol,fullTrail} | {running} | {comeback_pending}
+let animStates={};     // nameIdx → animState (동시 여러 명)
 let comebackNameIdx=-1;
 let detourRows={};
+let comebackUsed=false;
+let gameStarted=false;
+let allDone=false;
+let doneCount=0;       // 완료된 인원 수
 
 function buildLayout(){
   const W=canvas.width,H=canvas.height;
@@ -200,7 +206,6 @@ function rowY(r){
 // ══════════════════════════════════════
 function buildBars(){
   const res=[],occ=new Set();
-  // 원래 확률의 1/7 수준으로 줄임 (너무 자주 옆으로 꺾이지 않게)
   const den=Math.min(0.055,0.072-N*0.001);
   for(let r=1;r<=layout.numRows;r++){
     for(let c=0;c<N-1;c++){
@@ -212,14 +217,12 @@ function buildBars(){
 }
 
 // ══════════════════════════════════════
-// 팀 슬롯 (하단) - 완전 균등 분배
-// N명을 TEAM_N개 팀에 최대한 균등하게 배분
-// 예) 10명 2팀 → 5:5 / 11명 2팀 → 6:5 / 11명 3팀 → 4:4:3
+// 팀 슬롯
 // ══════════════════════════════════════
 function buildTeamSlots(){
   const slots=[];
-  const base=Math.floor(N/TEAM_N);   // 각 팀 기본 인원
-  const extra=N%TEAM_N;              // 1명 더 받는 팀 수
+  const base=Math.floor(N/TEAM_N);
+  const extra=N%TEAM_N;
   for(let t=0;t<TEAM_N;t++){
     const cnt=base+(t<extra?1:0);
     for(let k=0;k<cnt;k++) slots.push(t);
@@ -232,12 +235,11 @@ function buildTeamSlots(){
 // ══════════════════════════════════════
 function computePath(nameIdx,detourRow){
   const numRows=layout.numRows;
-  const startCol=nameIdx; // 출발 컬럼 = nameIdx (0~N-1 순서)
+  const startCol=nameIdx;
   const path=[{col:startCol,row:0,type:'start'}];
   let col=startCol;
   for(let r=1;r<=numRows;r++){
     if(r===detourRow){
-      // 유턴: 옆으로 갔다가 돌아옴 (col 변화 없음, 시각 효과용)
       const dir=col<N-1?1:-1;
       path.push({col:col+dir,row:r,type:'detour_go'});
       path.push({col,row:r,type:'detour_back'});
@@ -263,39 +265,26 @@ function rebuildAll(){
   teamSlots=buildTeamSlots();
   teams.forEach(t=>{t.members=[];});
 
-  // 이벤트 배치
   detourRows={};
   comebackNameIdx=-1;
+  comebackUsed=false;
+  doneCount=0;
+  allDone=false;
+
   for(let i=0;i<N;i++){
     if(Math.random()<0.15){
       detourRows[i]=2+Math.floor(Math.random()*(layout.numRows-4));
     }
   }
   if(N>2&&Math.random()<0.05){
-    comebackNameIdx=Math.floor(Math.random()*(N-1)); // 마지막 제외
+    comebackNameIdx=Math.floor(Math.random()*(N-1));
   }
 
-  // 경로 계산
   paths=Array.from({length:N},(_,i)=>computePath(i,detourRows[i]??-1));
-
   playerStates=Array(N).fill(null);
+  animStates={};
 
-  // 큐: 랜덤 순서
-  playerQueue=shuffle(Array.from({length:N},(_,i)=>i));
-
-  // comeback 처리: 해당 참가자를 큐 뒤쪽으로 이동
-  if(comebackNameIdx!==-1){
-    const pos=playerQueue.indexOf(comebackNameIdx);
-    if(pos!==-1){
-      playerQueue.splice(pos,1);
-      const minAt=Math.max(1,pos);
-      const maxAt=Math.max(minAt,playerQueue.length-1);
-      const at=minAt+Math.floor(Math.random()*(maxAt-minAt+1));
-      playerQueue.splice(at,0,comebackNameIdx);
-    }
-  }
-
-  drawStatic(-1);
+  drawStatic();
 }
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -309,9 +298,81 @@ function lerp(a,b,t){return a+(b-a)*t;}
 function ease(t){return t<0.5?2*t*t:-1+(4-2*t)*t;}
 
 // ══════════════════════════════════════
+// 클릭 가능 여부
+// ══════════════════════════════════════
+function isClickable(i){
+  if(!gameStarted||allDone)return false;
+  const st=playerStates[i];
+  // 이미 완료됐거나 현재 달리는 중이면 불가
+  if(st&&(st.done||st.running))return false;
+  // comeback_pending: 다시 클릭 가능
+  return true;
+}
+
+// ══════════════════════════════════════
+// 캔버스 클릭 처리
+// ══════════════════════════════════════
+function handleClick(ex,ey){
+  if(!gameStarted||allDone)return;
+  const bW=Math.min(layout.colSpacing*0.88,76),bH=26;
+  for(let i=0;i<N;i++){
+    if(!isClickable(i))continue;
+    const x=colX(i);
+    if(ex>=x-bW/2&&ex<=x+bW/2&&ey>=7&&ey<=7+bH){
+      launchPlayer(i);
+      return;
+    }
+  }
+}
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  handleClick((e.clientX-rect.left)*scaleX,(e.clientY-rect.top)*scaleY);
+});
+
+canvas.addEventListener('mousemove',e=>{
+  if(!gameStarted||allDone){canvas.style.cursor='default';return;}
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  const ex=(e.clientX-rect.left)*scaleX;
+  const ey=(e.clientY-rect.top)*scaleY;
+  const bW=Math.min(layout.colSpacing*0.88,76),bH=26;
+  let hovering=false;
+  for(let i=0;i<N;i++){
+    if(!isClickable(i))continue;
+    const x=colX(i);
+    if(ex>=x-bW/2&&ex<=x+bW/2&&ey>=7&&ey<=7+bH){hovering=true;break;}
+  }
+  canvas.style.cursor=hovering?'pointer':'default';
+});
+
+// ══════════════════════════════════════
+// 플레이어 시작
+// ══════════════════════════════════════
+function launchPlayer(nameIdx){
+  if(animStates[nameIdx])return; // 이미 달리는 중
+  AC.resume();
+  playerStates[nameIdx]={running:true};
+  animStates[nameIdx]={
+    nameIdx,
+    step:0,
+    x:colX(nameIdx),
+    y:rowY(0),
+    trail:[{x:colX(nameIdx),y:rowY(0)}],
+    segT:0,
+  };
+}
+
+// ══════════════════════════════════════
 // 정적 씬 그리기
 // ══════════════════════════════════════
-function drawStatic(curNameIdx){
+// hover 상태 추적 (draw에서 직접 처리)
+let hoverIdx=-1;
+
+function drawStatic(){
   const{W,H}=layout;
   ctx.clearRect(0,0,W,H);
   const bW=Math.min(layout.colSpacing*0.88,76),bH=26;
@@ -327,7 +388,7 @@ function drawStatic(curNameIdx){
       ctx.lineWidth=2;ctx.lineCap='round';
       ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke();
     }
-    // 도착 표시 (팀 슬롯에 이름 표시)
+    // 도착 슬롯 표시
     const dx=colX(st.destCol);
     const t2=teams[teamSlots[st.destCol]];
     if(t2){
@@ -339,13 +400,13 @@ function drawStatic(curNameIdx){
   // 세로 라인
   for(let c=0;c<N;c++){
     const x=colX(c);
-    const isCur=curNameIdx!==-1&&c===curNameIdx;
-    const a=isCur?0.65:0.18;
+    const isRunning=animStates[c]!==undefined;
+    const a=isRunning?0.65:0.18;
     const grd=ctx.createLinearGradient(0,TOP_PAD,0,H-BOT_PAD);
     grd.addColorStop(0,`rgba(56,189,248,${a*1.4})`);
     grd.addColorStop(0.5,`rgba(56,189,248,${a})`);
     grd.addColorStop(1,`rgba(56,189,248,${a*0.4})`);
-    ctx.strokeStyle=grd;ctx.lineWidth=isCur?2.5:1.5;
+    ctx.strokeStyle=grd;ctx.lineWidth=isRunning?2.5:1.5;
     ctx.beginPath();ctx.moveTo(x,TOP_PAD);ctx.lineTo(x,H-BOT_PAD);ctx.stroke();
   }
 
@@ -360,20 +421,58 @@ function drawStatic(curNameIdx){
   // 상단 이름 박스
   names.forEach((name,i)=>{
     const x=colX(i);
-    const done=playerStates[i]?.done;
-    const isCur=i===curNameIdx;
+    const st=playerStates[i];
+    const done=st?.done;
+    const running=st?.running||animStates[i]!==undefined;
+    const comeback=st?.comeback_pending;
+    const clickable=isClickable(i);
+    const isHover=hoverIdx===i&&clickable;
     const isComeback=i===comebackNameIdx&&!done;
-    ctx.fillStyle=done?'rgba(56,189,248,0.05)':isCur?'rgba(56,189,248,0.25)':'rgba(56,189,248,0.1)';
+
+    // 박스 배경
+    if(done){
+      ctx.fillStyle='rgba(56,189,248,0.04)';
+    } else if(running){
+      ctx.fillStyle='rgba(56,189,248,0.22)';
+    } else if(isHover){
+      ctx.fillStyle='rgba(56,189,248,0.35)';
+    } else if(clickable){
+      // 클릭 가능 → 살짝 밝게 + 펄스 느낌
+      ctx.fillStyle='rgba(56,189,248,0.13)';
+    } else {
+      ctx.fillStyle='rgba(56,189,248,0.05)';
+    }
     rrect(x-bW/2,7,bW,bH,7);ctx.fill();
-    ctx.strokeStyle=done?'rgba(56,189,248,0.1)':isCur?'rgba(56,189,248,0.9)':'rgba(56,189,248,0.28)';
-    ctx.lineWidth=isCur?1.8:1;
+
+    // 박스 테두리
+    if(done){
+      ctx.strokeStyle='rgba(56,189,248,0.1)';ctx.lineWidth=1;
+    } else if(running){
+      ctx.strokeStyle='rgba(56,189,248,0.9)';ctx.lineWidth=1.8;
+    } else if(isHover){
+      ctx.strokeStyle='rgba(56,189,248,1)';ctx.lineWidth=2;
+    } else if(clickable){
+      ctx.strokeStyle='rgba(56,189,248,0.55)';ctx.lineWidth=1.2;
+    } else {
+      ctx.strokeStyle='rgba(56,189,248,0.1)';ctx.lineWidth=1;
+    }
     rrect(x-bW/2,7,bW,bH,7);ctx.stroke();
+
+    // 클릭 가능한 박스 아래 "▼ 클릭" 힌트 (아직 안한 경우)
+    if(clickable&&!running&&!isHover&&gameStarted){
+      ctx.fillStyle='rgba(56,189,248,0.35)';
+      ctx.font=`9px "Noto Sans KR"`;
+      ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText('▼',x,7+bH+2);
+    }
+
     const fs=Math.min(11,bW*0.2);
     ctx.font=`700 ${fs}px "Noto Sans KR",sans-serif`;
-    ctx.fillStyle=done?'rgba(180,210,255,0.28)':isCur?'#fff':'rgba(200,230,255,0.82)';
+    ctx.fillStyle=done?'rgba(180,210,255,0.28)':running||isHover?'#fff':'rgba(200,230,255,0.82)';
     ctx.textAlign='center';ctx.textBaseline='middle';
     let label=name;
-    while(ctx.measureText(label).width>bW-(isComeback?22:10)&&label.length>1)label=label.slice(0,-1);
+    const maxW=bW-(isComeback?22:10);
+    while(ctx.measureText(label).width>maxW&&label.length>1)label=label.slice(0,-1);
     if(label!==name)label+='…';
     ctx.fillText(label,x-(isComeback?5:0),7+bH/2);
     if(isComeback){ctx.font=`10px sans-serif`;ctx.textAlign='right';ctx.fillText('🙅',x+bW/2-2,7+bH/2);}
@@ -405,17 +504,29 @@ let rafId=null,lastTS=0;
 function gameLoop(ts){
   rafId=requestAnimationFrame(gameLoop);
   const rawDt=Math.min(ts-lastTS,50);lastTS=ts;
-  if(!animState)return;
-  updateAnim((rawDt/1000)*(skipMode?20:speedMult));
-  // draw
-  drawStatic(animState.nameIdx);
-  drawTrail();
-  drawDot();
+  const dt=(rawDt/1000)*(skipMode?20:speedMult);
+
+  // 모든 활성 애니메이션 업데이트
+  Object.keys(animStates).forEach(key=>{
+    const ni=parseInt(key);
+    updateAnim(ni,dt);
+  });
+
+  drawStatic();
+
+  // 모든 트레일 그리기
+  Object.keys(animStates).forEach(key=>{
+    drawTrail(animStates[parseInt(key)]);
+  });
+  // 모든 도트 그리기
+  Object.keys(animStates).forEach(key=>{
+    drawDot(animStates[parseInt(key)]);
+  });
 }
 
-function drawTrail(){
-  if(!animState||animState.trail.length<2)return;
-  const pts=animState.trail;
+function drawTrail(st){
+  if(!st||st.trail.length<2)return;
+  const pts=st.trail;
   for(let i=1;i<pts.length;i++){
     ctx.strokeStyle=`rgba(56,189,248,${(i/pts.length)*0.88})`;
     ctx.lineWidth=3.5;ctx.lineCap='round';
@@ -427,9 +538,9 @@ function drawTrail(){
   ctx.fillStyle=grd;ctx.beginPath();ctx.arc(lp.x,lp.y,18,0,Math.PI*2);ctx.fill();
 }
 
-function drawDot(){
-  if(!animState)return;
-  const{x,y,nameIdx}=animState;
+function drawDot(st){
+  if(!st)return;
+  const{x,y,nameIdx}=st;
   ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle='#e0f7ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.stroke();
   const name=names[nameIdx];
@@ -442,12 +553,12 @@ function drawDot(){
 }
 
 // ══════════════════════════════════════
-// 애니메이션 업데이트
+// 애니메이션 업데이트 (개별)
 // ══════════════════════════════════════
-function updateAnim(dt){
-  const st=animState;if(!st)return;
-  const path=paths[st.nameIdx];
-  if(!path||st.step>=path.length-1){arrivePlayer();return;}
+function updateAnim(nameIdx,dt){
+  const st=animStates[nameIdx];if(!st)return;
+  const path=paths[nameIdx];
+  if(!path||st.step>=path.length-1){arrivePlayer(nameIdx);return;}
   const from=path[st.step],to=path[st.step+1];
   const fx=colX(from.col),fy=rowY(from.row);
   const tx=colX(to.col),ty=rowY(to.row);
@@ -457,24 +568,24 @@ function updateAnim(dt){
   if(st.segT>=1){
     st.segT=0;st.step++;
     st.x=tx;st.y=ty;
-    push(tx,ty);
+    push(st,tx,ty);
     const node=path[st.step];
     if(node){
       if(node.type==='right'||node.type==='left')sndTurn();
       else if(node.type==='detour_go'){
-        showEvt('🔀','우회 발생!',names[st.nameIdx],'잠깐 옆으로 샜다가 돌아옵니다…',skipMode?250:1000);
+        showEvt('🔀','우회 발생!',names[nameIdx],'잠깐 옆으로 샜다가 돌아옵니다…',skipMode?250:1000);
         sndEvent();
       }
-      else if(node.type==='arrive'){arrivePlayer();return;}
+      else if(node.type==='arrive'){arrivePlayer(nameIdx);return;}
     }
   }else{
     st.x=lerp(fx,tx,ease(st.segT));
     st.y=lerp(fy,ty,ease(st.segT));
-    push(st.x,st.y);
+    push(st,st.x,st.y);
     if(Math.random()<0.05)sndStep();
   }
 }
-function push(x,y){if(!animState)return;animState.trail.push({x,y});if(animState.trail.length>TRAIL_LEN)animState.trail.shift();}
+function push(st,x,y){st.trail.push({x,y});if(st.trail.length>TRAIL_LEN)st.trail.shift();}
 
 // ══════════════════════════════════════
 // 이벤트 팝업
@@ -494,29 +605,23 @@ function showEvt(icon,title,name,desc,dur){
 // ══════════════════════════════════════
 // 도착 처리
 // ══════════════════════════════════════
-// comeback 플래그: 이미 comeback 이벤트를 한 번 진행했는지 추적
-let comebackUsed=false;
+function arrivePlayer(nameIdx){
+  const st=animStates[nameIdx];
+  if(!st)return;
 
-function arrivePlayer(){
-  if(!animState)return;
-  const{nameIdx,trail}=animState;
   const path=paths[nameIdx];
   const destCol=path[path.length-1].col;
 
-  // comeback 이벤트: 최초 1회, comebackNameIdx인 경우
+  // comeback 이벤트: 최초 1회
   if(nameIdx===comebackNameIdx&&!comebackUsed){
     comebackUsed=true;
-    showEvt('🙅','나 지금 안할래!',names[nameIdx],'순서를 뒤로 미룹니다!',skipMode?400:1800);
+    showEvt('🙅','나 지금 안할래!',names[nameIdx],'다시 클릭해서 재시작하세요!',skipMode?400:2500);
     sndEvent();
-    playerStates[nameIdx]={done:false};
-    // 재삽입
-    const minAt=1,maxAt=Math.max(1,playerQueue.length);
-    const at=minAt+Math.floor(Math.random()*(maxAt-minAt+1));
-    playerQueue.splice(at,0,nameIdx);
-    // 다음번엔 comeback 없이 경로 재계산
+    // 상태: comeback_pending (다시 클릭 가능)
+    delete animStates[nameIdx];
+    playerStates[nameIdx]={comeback_pending:true};
+    // 경로 재계산 (comeback 없이)
     paths[nameIdx]=computePath(nameIdx,detourRows[nameIdx]??-1);
-    animState=null;
-    setTimeout(nextPlayer,skipMode?80:520);
     return;
   }
 
@@ -524,19 +629,16 @@ function arrivePlayer(){
   const teamIdx=teamSlots[destCol];
   if(teams[teamIdx])teams[teamIdx].members.push(names[nameIdx]);
   const fullTrail=path.map(nd=>({x:colX(nd.col),y:rowY(nd.row)}));
+  delete animStates[nameIdx];
   playerStates[nameIdx]={done:true,destCol,fullTrail};
   sndArrive();
-  animState=null;
-  setTimeout(nextPlayer,skipMode?60:320);
-}
+  doneCount++;
 
-// ══════════════════════════════════════
-// 큐 진행
-// ══════════════════════════════════════
-function nextPlayer(){
-  if(playerQueue.length===0){allDone=true;setTimeout(showFinalResult,skipMode?150:600);return;}
-  const ni=playerQueue.shift();
-  animState={nameIdx:ni,step:0,x:colX(ni),y:rowY(0),trail:[{x:colX(ni),y:rowY(0)}],segT:0};
+  // 모두 완료됐는지 체크
+  if(doneCount>=N){
+    allDone=true;
+    setTimeout(showFinalResult,skipMode?150:600);
+  }
 }
 
 // ══════════════════════════════════════
@@ -544,7 +646,7 @@ function nextPlayer(){
 // ══════════════════════════════════════
 function showFinalResult(){
   cancelAnimationFrame(rafId);
-  drawStatic(-1);
+  drawStatic();
   document.getElementById('resultGrid').innerHTML=teams.map((t,i)=>`
     <div class="team-res-card" style="border-top-color:${t.color};animation-delay:${i*0.11}s">
       <div class="trc-name" style="color:${t.color}">${t.name} <span style="font-size:11px;color:var(--muted)">(${t.members.length}명)</span></div>
@@ -573,16 +675,35 @@ function startGame(){
   AC.resume();
   document.getElementById('startOverlay').style.display='none';
   document.getElementById('skipBtn').style.display='inline-block';
-  comebackUsed=false;
   rebuildAll();
   gameStarted=true;
   lastTS=performance.now();
   requestAnimationFrame(ts=>{lastTS=ts;gameLoop(ts);});
-  setTimeout(nextPlayer,500);
 }
 
+// 마우스 위치 추적 (hover 효과)
+canvas.addEventListener('mousemove',e=>{
+  if(!gameStarted||allDone){hoverIdx=-1;return;}
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  const ex=(e.clientX-rect.left)*scaleX;
+  const ey=(e.clientY-rect.top)*scaleY;
+  const bW=Math.min(layout.colSpacing*0.88,76),bH=26;
+  let found=-1;
+  for(let i=0;i<N;i++){
+    if(!isClickable(i))continue;
+    const x=colX(i);
+    if(ex>=x-bW/2&&ex<=x+bW/2&&ey>=7&&ey<=7+bH){found=i;break;}
+  }
+  hoverIdx=found;
+  canvas.style.cursor=found>=0?'pointer':'default';
+},{passive:true});
+
+canvas.addEventListener('mouseleave',()=>{hoverIdx=-1;canvas.style.cursor='default';});
+
 // 초기 그리기
-resizeCanvas();buildLayout();bars=buildBars();teamSlots=buildTeamSlots();drawStatic(-1);
+resizeCanvas();buildLayout();bars=buildBars();teamSlots=buildTeamSlots();drawStatic();
 </script>
 </body>
 </html>
