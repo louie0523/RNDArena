@@ -75,6 +75,15 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;}
     <div class="overlay" id="startOverlay">
       <div class="ot">🏇 경마 레이스</div>
       <div class="os" id="pInfo">참가자 0명</div>
+      <div style="margin-bottom:24px;text-align:center;">
+        <div style="font-family:'Black Han Sans',sans-serif;font-size:15px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;">🏁 트랙 수 설정</div>
+        <div style="display:flex;align-items:center;gap:0;justify-content:center;">
+          <button onclick="changeLaps(-1)" style="background:rgba(127,255,0,0.15);border:1px solid rgba(127,255,0,0.4);color:var(--accent);width:36px;height:36px;border-radius:8px 0 0 8px;font-size:20px;cursor:pointer;line-height:1;">−</button>
+          <div id="lapCountDisplay" style="background:rgba(0,0,0,0.5);border:1px solid rgba(127,255,0,0.3);border-left:none;border-right:none;color:#fff;font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;width:56px;height:36px;display:flex;align-items:center;justify-content:center;">3</div>
+          <button onclick="changeLaps(1)" style="background:rgba(127,255,0,0.15);border:1px solid rgba(127,255,0,0.4);color:var(--accent);width:36px;height:36px;border-radius:0 8px 8px 0;font-size:20px;cursor:pointer;line-height:1;">+</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;">바퀴 (1 ~ 10바퀴)</div>
+      </div>
       <button class="sbtn" onclick="startGame()">🚩 출발!</button>
     </div>
     <div class="result-overlay" id="resultOverlay">
@@ -122,7 +131,13 @@ window.addEventListener('resize',resize);
 
 const COLORS=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FC8','#FF9A3C','#C77DFF','#00D4FF','#FF4D6D','#2EC4B6','#FF8C42','#ACE894'];
 const HORSE_EMOJIS=['🏇','🐴','🦄','🐎','🏇','🐴','🦄','🐎','🏇','🐴','🦄','🐎'];
-const TOTAL_LAPS=3;
+let TOTAL_LAPS=3;
+let gameStartTime=0;
+
+function changeLaps(delta){
+  TOTAL_LAPS=Math.max(1,Math.min(10,TOTAL_LAPS+delta));
+  document.getElementById('lapCountDisplay').textContent=TOTAL_LAPS;
+}
 
 let horses=[],arrived=[],gameRunning=false,gameFinished=false,frameId=null,lastEventTime=0;
 let glowParticles=[];
@@ -420,7 +435,7 @@ function update(){
 
       let spd2=h.baseSpeed;
       if(h.eventState==='toilet'||h.eventState==='sleep')spd2=0;
-      else{spd2*=h.speedMult;if(h.skillActive){const pr=1-h.skillTimer/240;spd2*=(1+pr*3.0);}}
+      else{spd2*=h.speedMult;if(h.skillActive){const pr=1-h.skillTimer/240;const elapsed=(Date.now()-gameStartTime)/1000;const skillBoost=elapsed>=50?1.5:elapsed>=20?1.25:1.0;spd2*=(1+pr*3.0)*skillBoost;}}
 
       h.angle+=spd2;
       h.progress=(h.angle+Math.PI/2)/(Math.PI*2);
@@ -460,6 +475,7 @@ function showResult(){
 
 function startGame(){
   AC.resume();document.getElementById('startOverlay').style.display='none';
+  gameStartTime=Date.now();
   createHorses();updateRankPanel();addLog('🚩 출발!','arrive');playStart();
   gameRunning=true;frameId=requestAnimationFrame(update);
 }
