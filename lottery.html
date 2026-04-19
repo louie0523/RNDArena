@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎟️ 복권 추첨 - RANDOM ARENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&family=Oswald:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06060f;--surface:#0f0f1e;--surface2:#181830;
+  --accent:#f5c518;--accent2:#ff4d4d;--accent3:#00e5ff;
+  --text:#f0f0f0;--muted:#777;--border:rgba(255,255,255,0.07);
+  --gold:linear-gradient(135deg,#f5c518,#ff9500,#f5c518);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  min-height:100vh;overflow-x:hidden;
+  display:flex;flex-direction:column;align-items:center;
+  cursor:none;
+}
+.bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+header{
+  position:relative;z-index:10;width:100%;
+  padding:20px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.logo{font-family:'Oswald',sans-serif;font-size:24px;font-weight:900;letter-spacing:4px;color:#f5c518;text-decoration:none;}
+.logo em{color:var(--accent2);font-style:normal;}
+
+.main{
+  position:relative;z-index:10;width:100%;max-width:900px;
+  padding:40px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+}
+
+.status-bar{text-align:center;}
+.rank-display{
+  font-family:'Black Han Sans',sans-serif;font-size:48px;letter-spacing:2px;
+  background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1;
+}
+.rank-sub{font-size:14px;color:var(--muted);margin-top:6px;}
+.rank-sub span{color:var(--accent);font-weight:700;}
+
+.lottery-wrapper{position:relative;display:flex;align-items:center;justify-content:center;}
+.lottery-card{
+  position:relative;width:480px;
+  background:linear-gradient(145deg,#f5e642,#f0c020,#e8a800);
+  border-radius:16px;padding:24px;
+  box-shadow:0 0 60px rgba(245,197,24,.3),0 20px 60px rgba(0,0,0,.8);
+  border:3px solid #d4a017;overflow:hidden;
+  transition:transform .6s cubic-bezier(.34,1.56,.64,1),box-shadow .6s;
+  cursor:none;user-select:none;
+}
+.lottery-card.revealed{
+  transform:scale(1.08);
+  box-shadow:0 0 100px rgba(245,197,24,.6),0 30px 80px rgba(0,0,0,.9);
+}
+
+.lottery-deco-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.lottery-serial{font-family:'Oswald',sans-serif;font-size:11px;color:#7a5c00;letter-spacing:2px;}
+.lottery-logo-text{font-family:'Black Han Sans',sans-serif;font-size:18px;color:#7a5c00;letter-spacing:3px;}
+.lottery-stars{color:#d4a017;font-size:14px;letter-spacing:2px;}
+
+/* 이름 영역 */
+.lottery-name-area{
+  background:rgba(255,255,255,.25);
+  border:2px solid rgba(255,255,255,.4);
+  border-radius:10px;
+  margin-bottom:16px;
+  min-height:110px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.lottery-name{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:36px;color:#3a2800;letter-spacing:4px;
+  opacity:0;
+  transition:opacity 0.4s ease;
+  position:relative;z-index:1;
+  padding:20px 24px;
+  max-width:100%;overflow:hidden;white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.lottery-name.show{opacity:1;}
+
+/* 스크래치 캔버스 — nameArea를 완전히 덮는 absolute, 판정용으로 시각적으로 숨김 */
+#scratchCanvas{
+  position:absolute;
+  top:0;left:0;
+  z-index:2;
+  cursor:none;
+  display:block;
+  opacity:0;
+}
+/* 장식 은박 캔버스 — scratchCanvas 위에 올라감, 이벤트 통과 */
+#decorCanvas{
+  position:absolute;
+  top:0;left:0;
+  z-index:3;
+  cursor:none;
+  display:block;
+  pointer-events:none;
+}
+
+.lottery-deco-bottom{display:flex;justify-content:space-between;align-items:center;}
+.lottery-prize{font-family:'Black Han Sans',sans-serif;font-size:13px;color:#7a5c00;letter-spacing:1px;}
+.lottery-barcode{display:flex;gap:1px;align-items:flex-end;}
+.lottery-barcode span{background:#7a5c00;width:2px;border-radius:1px;}
+
+/* SVG 연필 커서 */
+#cursor{
+  position:fixed;width:30px;height:30px;
+  pointer-events:none;z-index:9999;
+  transform:translate(-5px,-26px);
+  transition:transform .08s;
+}
+
+.scratch-progress{
+  width:480px;background:rgba(255,255,255,.08);
+  border-radius:20px;height:8px;overflow:hidden;
+}
+.scratch-progress-fill{
+  height:100%;background:var(--gold);
+  border-radius:20px;width:0%;transition:width .1s;
+}
+
+.hint-text{font-size:13px;color:var(--muted);text-align:center;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:.5;}50%{opacity:1;}}
+
+.next-btn, .skip-btn{
+  padding:10px 28px;border-radius:8px;font-size:14px;
+  font-family:'Black Han Sans',sans-serif;letter-spacing:1px;
+  transition:all .2s;position:relative;z-index:20;pointer-events:auto;
+  cursor:pointer;
+}
+.next-btn{
+  background:var(--gold);border:none;color:#000;
+  opacity:0.35;
+}
+.next-btn:not([disabled]){opacity:1;box-shadow:0 4px 16px rgba(245,197,24,.4);}
+.next-btn:not([disabled]):hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,197,24,.5);}
+.skip-btn{
+  background:none;border:2px solid rgba(245,197,24,.35);color:rgba(245,197,24,.6);
+}
+.skip-btn:hover{border-color:rgba(245,197,24,.7);color:var(--accent);}
+
+.results-panel{width:100%;max-width:900px;position:relative;z-index:10;padding:0 20px 40px;}
+.results-title{font-family:'Black Han Sans',sans-serif;font-size:16px;letter-spacing:3px;color:var(--muted);margin-bottom:16px;text-align:center;}
+.results-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+.result-chip{
+  padding:6px 16px;border-radius:20px;font-size:13px;
+  font-family:'Black Han Sans',sans-serif;letter-spacing:1px;
+  display:flex;align-items:center;gap:6px;
+  animation:chipIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes chipIn{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+.chip-pass{background:rgba(245,197,24,.15);border:1px solid rgba(245,197,24,.4);color:var(--accent);}
+.chip-fail{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.3);color:#ff6b6b;}
+.chip-normal{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);}
+.chip-rank{font-size:10px;opacity:.7;}
+
+.finish-overlay{
+  position:fixed;inset:0;background:rgba(6,6,15,.95);z-index:100;
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:24px;padding:20px;
+}
+.finish-overlay.show{display:flex;}
+.finish-title{
+  font-family:'Black Han Sans',sans-serif;font-size:52px;letter-spacing:4px;
+  background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;
+}
+.finish-sub{font-size:15px;color:var(--muted);text-align:center;}
+.finish-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:700px;}
+.finish-item{
+  padding:12px 20px;border-radius:12px;text-align:center;
+  font-family:'Black Han Sans',sans-serif;font-size:14px;letter-spacing:1px;
+  animation:chipIn .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+.finish-pass{background:rgba(245,197,24,.2);border:1px solid rgba(245,197,24,.5);color:var(--accent);}
+.finish-fail{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.3);color:#ff6b6b;}
+.finish-normal{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);}
+.finish-rank-num{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.finish-name{font-size:18px;}
+.finish-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.btn-restart{
+  padding:14px 32px;border-radius:12px;border:none;background:var(--gold);color:#000;
+  font-family:'Black Han Sans',sans-serif;font-size:16px;letter-spacing:2px;
+  cursor:none;transition:all .2s;
+}
+.btn-restart:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,197,24,.4);}
+.btn-home{
+  padding:14px 32px;border-radius:12px;border:1px solid var(--border);
+  background:none;color:var(--muted);
+  font-family:'Black Han Sans',sans-serif;font-size:16px;letter-spacing:2px;
+  cursor:none;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;
+}
+.btn-home:hover{border-color:#666;color:var(--text);}
+
+@media(max-width:520px){
+  .lottery-card{width:calc(100vw - 40px);}
+  .lottery-name{font-size:26px;}
+  .scratch-progress{width:calc(100vw - 40px);}
+  .rank-display{font-size:36px;}
+}
+
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:200;animation:confettiFall linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+</style>
+</head>
+<body>
+<canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+<svg id="cursor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <rect x="9" y="1" width="6" height="15" rx="2" fill="#f5c518" stroke="#9a6e00" stroke-width="1"/>
+  <rect x="9" y="1" width="6" height="4" rx="2" fill="#ffb3c6" stroke="#9a6e00" stroke-width="1"/>
+  <line x1="9" y1="6" x2="15" y2="6" stroke="#9a6e00" stroke-width="0.8" opacity="0.6"/>
+  <polygon points="9,16 15,16 12,23" fill="#ffe9b0" stroke="#9a6e00" stroke-width="1"/>
+  <circle cx="12" cy="22.5" r="1" fill="#333"/>
+</svg>
+
+<header>
+  <a href="index.html" class="logo">RANDOM<em>ARENA</em></a>
+  <div style="font-size:13px;color:var(--muted);">🎟️ 복권 추첨</div>
+</header>
+
+<div class="main">
+  <div class="status-bar">
+    <div class="rank-display" id="rankDisplay">1등</div>
+    <div class="rank-sub" id="rankSub">을 정하는 중입니다! &nbsp;|&nbsp; 남은 참가자: <span id="remainCount">?</span>명</div>
+  </div>
+
+  <div class="lottery-wrapper">
+    <div class="lottery-card" id="lotteryCard">
+      <div class="lottery-deco-top">
+        <div class="lottery-serial" id="lotterySerial">NO. 000001</div>
+        <div class="lottery-logo-text">RANDOM ARENA</div>
+        <div class="lottery-stars">★★★★★</div>
+      </div>
+      <div class="lottery-name-area" id="nameArea">
+        <div class="lottery-name" id="lotteryName">???</div>
+        <canvas id="scratchCanvas"></canvas>
+        <canvas id="decorCanvas"></canvas>
+      </div>
+      <div class="lottery-deco-bottom">
+        <div class="lottery-prize" id="prizeLabel">🥇 1등 당첨!</div>
+        <div class="lottery-barcode" id="barcode"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scratch-progress"><div class="scratch-progress-fill" id="progressFill"></div></div>
+  <div class="hint-text" id="hintText">✏️ 마우스 좌클릭을 누른 채 긁어보세요!</div>
+  <div style="display:flex;gap:12px;align-items:center;">
+    <button class="next-btn" id="nextBtn" onclick="nextLottery()" disabled>다음 →</button>
+  </div>
+
+  <div class="results-panel">
+    <div class="results-title" id="resultsTitle" style="display:none;">📋 지금까지 결과</div>
+    <div class="results-grid" id="resultsGrid"></div>
+  </div>
+</div>
+
+<div class="finish-overlay" id="finishOverlay">
+  <div class="finish-title">🎟️ 추첨 완료!</div>
+  <div class="finish-sub" id="finishSub"></div>
+  <div class="finish-grid" id="finishGrid"></div>
+  <div class="finish-btns">
+    <button class="btn-restart" onclick="restartGame()">🔄 다시 추첨</button>
+    <a href="index.html" class="btn-home">🏠 홈으로</a>
+  </div>
+</div>
+
+<script>
+/* ── 파라미터 ── */
+const params   = new URLSearchParams(location.search);
+const allNames = params.get('names')
+  ? params.get('names').split(',').map(s=>s.trim()).filter(Boolean)
+  : ['김철수','이영희','박준우','최민준','정수현','한지원','오세진','윤아름'];
+const usePass = params.get('usePass') === 'true';
+const passN   = parseInt(params.get('passN')) || 3;
+
+/* ── 상태 ── */
+let pool        = shuffle([...allNames]);
+let results     = [];
+let currentRank = 1;
+let currentName = '';
+let isRevealed  = false;
+let mouseDown   = false;
+let scratchReady = false;  // 은박 그리기 완료 전엔 긁기/판정 차단
+
+/* ── 배경 별 ── */
+const bgCv = document.getElementById('bgCanvas');
+const bgCx = bgCv.getContext('2d');
+function resizeBg(){ bgCv.width=window.innerWidth; bgCv.height=window.innerHeight; }
+resizeBg(); window.addEventListener('resize',resizeBg);
+const stars=Array.from({length:80},()=>({
+  x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+  r:Math.random()*1.5+.3,speed:Math.random()*.3+.1,opacity:Math.random()
+}));
+(function drawBg(){
+  bgCx.clearRect(0,0,bgCv.width,bgCv.height);
+  stars.forEach(s=>{
+    s.y-=s.speed; if(s.y<0){s.y=bgCv.height;s.x=Math.random()*bgCv.width;}
+    s.opacity+=.01; if(s.opacity>1)s.opacity=0;
+    bgCx.beginPath();bgCx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    bgCx.fillStyle=`rgba(200,200,255,${s.opacity*.4})`;bgCx.fill();
+  });
+  requestAnimationFrame(drawBg);
+})();
+
+/* ── 커서 ── */
+const curEl=document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{
+  curEl.style.left=e.clientX+'px'; curEl.style.top=e.clientY+'px';
+});
+document.addEventListener('mousedown',()=>{
+  curEl.style.transform='translate(-5px,-26px) rotate(-20deg) scale(0.85)';
+});
+document.addEventListener('mouseup',()=>{
+  curEl.style.transform='translate(-5px,-26px)';
+  mouseDown=false;
+});
+
+/* ── 바코드 ── */
+function genBarcode(){
+  const bc=document.getElementById('barcode'); bc.innerHTML='';
+  for(let i=0;i<30;i++){
+    const s=document.createElement('span');
+    s.style.height=(Math.random()*16+8)+'px';
+    s.style.opacity=Math.random()*.6+.4;
+    bc.appendChild(s);
+  }
+}
+
+/* ══════════════════════════════
+   initScratch — 완전 재초기화 + 은박 등장 애니메이션
+   1) canvas width 재할당 → 픽셀 버퍼 완전 초기화
+   2) compositeOperation 항상 source-over 로 리셋
+   3) 이름 크기 기반 박스를 은박으로 애니메이션 등장
+   4) 애니메이션 완료 후에만 scratchReady = true
+══════════════════════════════ */
+/* ══════════════════════════════
+   initScratch — 완전 재초기화 + 은박 등장 애니메이션
+   nameArea 전체를 은박으로 가득 채움
+══════════════════════════════ */
+function initScratch(){
+  scratchReady = false;
+
+  const cv      = document.getElementById('scratchCanvas');
+  const dv      = document.getElementById('decorCanvas');
+  const area    = document.getElementById('nameArea');
+  const nameEl  = document.getElementById('lotteryName');
+
+  const r = area.getBoundingClientRect();
+  const W = Math.round(r.width);
+  const H = Math.round(r.height);
+
+  // ── 두 캔버스 크기 동기화 ──
+  [cv, dv].forEach(c => {
+    c.width  = W; c.height = H;
+    c.style.width  = W+'px'; c.style.height = H+'px';
+  });
+  cv.style.pointerEvents = 'none';
+
+  const ctx  = cv.getContext('2d');
+  const dctx = dv.getContext('2d');
+  ctx.globalCompositeOperation  = 'source-over'; ctx.globalAlpha  = 1;
+  dctx.globalCompositeOperation = 'source-over'; dctx.globalAlpha = 1;
+  ctx.clearRect(0,0,W,H);
+  dctx.clearRect(0,0,W,H);
+
+  // ── 판정용: 이름 글자 박스 좌표 계산 (은박은 전체 채우지만 판정은 이 영역 기준) ──
+  const fs   = parseInt(window.getComputedStyle(nameEl).fontSize) || 36;
+  const tmpCtx = cv.getContext('2d');
+  tmpCtx.font = `900 ${fs}px 'Black Han Sans',sans-serif`;
+  const rawTw = tmpCtx.measureText(currentName).width;
+  const tw   = Math.min(rawTw, W - 32);
+  const th   = fs * 1.6;
+  const pad  = 24;
+  const boxW = Math.min(tw + pad*2, W - 8);
+  const boxH = th + pad*2;
+  const bx   = Math.round((W - boxW) / 2);
+  const by   = Math.round((H - boxH) / 2);
+  cv._bx = bx; cv._by = by; cv._bw = boxW; cv._bh = boxH;
+
+  // ── 슬라이드 인 애니메이션 ──
+  const ANIM_MS = 420;
+  const t0 = performance.now();
+
+  function drawFrame(now){
+    const p    = Math.min((now - t0) / ANIM_MS, 1);
+    const ease = 1 - Math.pow(1 - p, 3); // easeOutCubic
+    const revW = Math.round(W * ease);
+
+    // ── scratchCanvas: 불투명 채움 (판정용, CSS opacity:0 으로 눈에 안 보임) ──
+    ctx.clearRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#888888';
+    ctx.fillRect(0, 0, revW, H);
+
+    // ── decorCanvas: 화려한 장식 은박 전체 채움 ──
+    dctx.clearRect(0,0,W,H);
+    dctx.globalCompositeOperation = 'source-over';
+    dctx.globalAlpha = 1;
+
+    dctx.save();
+    dctx.beginPath(); dctx.rect(0, 0, revW, H); dctx.clip();
+
+    // 메인 은박 그라디언트 (대각선)
+    const g = dctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0,    '#b8b8b8');
+    g.addColorStop(0.12, '#f5f5f5');
+    g.addColorStop(0.25, '#a0a0a0');
+    g.addColorStop(0.4,  '#e8e8e8');
+    g.addColorStop(0.55, '#b0b0b0');
+    g.addColorStop(0.7,  '#f0f0f0');
+    g.addColorStop(0.85, '#a8a8a8');
+    g.addColorStop(1,    '#d0d0d0');
+    dctx.fillStyle = g;
+    dctx.fillRect(0, 0, W, H);
+
+    // 광택 하이라이트 (위쪽 밝은 띠)
+    const hl = dctx.createLinearGradient(0, 0, 0, H * 0.45);
+    hl.addColorStop(0,   'rgba(255,255,255,0.6)');
+    hl.addColorStop(1,   'rgba(255,255,255,0)');
+    dctx.fillStyle = hl;
+    dctx.fillRect(0, 0, W, H);
+
+    // 아래쪽 그림자
+    const sh = dctx.createLinearGradient(0, H*0.6, 0, H);
+    sh.addColorStop(0, 'rgba(0,0,0,0)');
+    sh.addColorStop(1, 'rgba(0,0,0,0.12)');
+    dctx.fillStyle = sh;
+    dctx.fillRect(0, 0, W, H);
+
+    // 사선 줄무늬 질감
+    dctx.globalAlpha = 0.06;
+    dctx.strokeStyle = '#ffffff';
+    dctx.lineWidth = 2;
+    for(let sx = -H; sx < W + H; sx += 12){
+      dctx.beginPath();
+      dctx.moveTo(sx, 0);
+      dctx.lineTo(sx + H, H);
+      dctx.stroke();
+    }
+    dctx.globalAlpha = 1;
+
+    // SCRATCH 워터마크 (전체 영역)
+    dctx.font = 'bold 9px sans-serif';
+    dctx.fillStyle = 'rgba(60,60,60,0.18)';
+    for(let ty = 14; ty < H - 4; ty += 16)
+      for(let tx = 4; tx < W - 40; tx += 60)
+        dctx.fillText('✦ SCRATCH', tx, ty);
+
+    dctx.restore();
+
+    if(p < 1){
+      requestAnimationFrame(drawFrame);
+    } else {
+      // 애니메이션 완료 → 0.25초 후 이름 fade in + 긁기 허용
+      setTimeout(() => {
+        const ne = document.getElementById('lotteryName');
+        if(ne){
+          ne.style.transition = 'opacity 0.4s ease';
+          ne.style.opacity = '1';
+        }
+      }, 250);
+
+      cv.style.pointerEvents = 'auto';
+      scratchReady = true;
+
+      cv.onmousedown  = e => { mouseDown = true;  doScratch(e); };
+      cv.onmousemove  = e => { if(mouseDown) doScratch(e); };
+      cv.onmouseup    = () => { mouseDown = false; };
+      cv.onmouseleave = () => { mouseDown = false; };
+      cv.ontouchstart = e => { e.preventDefault(); doScratch(e.touches[0]); };
+      cv.ontouchmove  = e => { e.preventDefault(); if(!isRevealed) doScratch(e.touches[0]); };
+    }
+  }
+
+  requestAnimationFrame(drawFrame);
+}
+
+/* ── 긁기 ── */
+function doScratch(e){
+  if(isRevealed || !scratchReady) return;
+  const cv  = document.getElementById('scratchCanvas');
+  const dv  = document.getElementById('decorCanvas');
+  const cr  = cv.getBoundingClientRect();
+  const x   = (e.clientX ?? e.pageX) - cr.left;
+  const y   = (e.clientY ?? e.pageY) - cr.top;
+  const ctx  = cv.getContext('2d');
+  const dctx = dv.getContext('2d');
+
+  function eraseCircle(c, cx, cy, r){
+    c.globalCompositeOperation = 'destination-out';
+    c.globalAlpha = 1;
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI*2); c.fill();
+  }
+
+  eraseCircle(ctx,  x, y, 22);
+  eraseCircle(dctx, x, y, 22);
+  for(let i = 0; i < 3; i++){
+    const ox = x+(Math.random()*18-9), oy = y+(Math.random()*18-9), sr = Math.random()*6+2;
+    eraseCircle(ctx,  ox, oy, sr);
+    eraseCircle(dctx, ox, oy, sr);
+  }
+  checkPct(cv, ctx);
+}
+
+/* ── 진행도 (은박 박스 영역만 계산) ── */
+function checkPct(cv, ctx){
+  if(!scratchReady) return;
+  const bx = cv._bx || 0, by = cv._by || 0;
+  const bw = cv._bw || cv.width, bh = cv._bh || cv.height;
+  let data;
+  try { data = ctx.getImageData(bx, by, bw, bh).data; } catch(e){ return; }
+  let transparent = 0, total = bw * bh;
+  for(let i = 3; i < data.length; i += 4){ if(data[i] < 128) transparent++; }
+  const pct = (transparent / total) * 100;
+  document.getElementById('progressFill').style.width = Math.min(pct, 100) + '%';
+  if(pct >= 60 && !isRevealed) revealCard();
+}
+
+/* ── 공개 ── */
+function revealCard(){
+  if(isRevealed) return;
+  isRevealed  = true;
+  mouseDown   = false;
+  scratchReady = false; 
+
+  const cv   = document.getElementById('scratchCanvas');
+  const dv   = document.getElementById('decorCanvas');
+  const ctx  = cv.getContext('2d');
+  const dctx = dv.getContext('2d');
+
+  // 긁기 완전 차단
+  cv.style.pointerEvents = 'none';
+  cv.onmousedown = null; cv.onmousemove = null;
+
+  document.getElementById('lotteryCard').classList.add('revealed');
+  if(currentRank <= 3) spawnConfetti();
+
+  // 두 캔버스 동시 페이드아웃 (step 8회)
+  let step = 0;
+  const STEPS = 8;
+  const W = cv.width, H = cv.height;
+  const fd = setInterval(()=>{
+    step++;
+    [ctx, dctx].forEach(c => {
+      c.globalCompositeOperation = 'destination-out';
+      c.globalAlpha = 0.3;
+      c.fillRect(0, 0, W, H);
+    });
+    if(step >= STEPS){
+      clearInterval(fd);
+      [ctx, dctx].forEach(c => {
+        c.globalAlpha = 1;
+        c.fillRect(0, 0, W, H);
+        c.globalCompositeOperation = 'source-over';
+        c.globalAlpha = 1;
+      });
+      const h = document.getElementById('hintText');
+      if(h){ h.textContent = '✨ 아래 [다음] 버튼을 눌러 계속하세요!'; h.style.animation = 'none'; h.style.opacity = '1'; h.style.color = '#f5c518'; }
+      const nb = document.getElementById('nextBtn');
+      if(nb) nb.disabled = false;
+    }
+  }, 30);
+}
+
+/* ── 다음 ── */
+let isTransitioning = false;
+function nextLottery(){
+  if(!isRevealed || isTransitioning) return;
+  isTransitioning = true;
+
+  // 버튼·카드 즉시 잠금
+  document.getElementById('nextBtn').disabled = true;
+  const card = document.getElementById('lotteryCard');
+  card.onclick = null;
+  card.style.pointerEvents = 'none';
+
+  results.push({ name:currentName, rank:currentRank, pass: usePass ? (currentRank<=passN) : null });
+  updateResultsPanel();
+  currentRank++;
+
+  if(usePass && currentRank > passN){ skipRemaining(); return; }
+  if(pool.length === 0){ isTransitioning = false; showFinish(); return; }
+  loadNextCard();
+}
+
+function skipRemaining(){
+  pool.forEach((name,i) => {
+    results.push({name, rank:passN+1+i, pass:false});
+    updateResultsPanel();
+  });
+  pool = [];
+  showFinish();
+}
+
+function skipCurrent(){
+  // 공개 완료 상태면 다음으로
+  if(isRevealed){ nextLottery(); return; }
+  // 전환 중이면 무시
+  if(isTransitioning) return;
+  // pool에 이름 없으면 무시
+  if(pool.length === 0) return;
+  // 현재 이름 맨 뒤로, 다음 카드 로드
+  pool.push(currentName);
+  loadNextCard();
+}
+
+/* ── 카드 로드 ── */
+function loadNextCard(){
+  // 상태 초기화
+  currentName     = pool.shift();
+  isRevealed      = false;
+  mouseDown       = false;
+  isTransitioning = false;
+  scratchReady    = false;
+
+  // 카드 DOM 초기화
+  const card = document.getElementById('lotteryCard');
+  if(card){ card.classList.remove('revealed'); card.onclick = null; card.style.pointerEvents = ''; }
+
+  // 버튼 초기화
+  const nextBtn = document.getElementById('nextBtn');
+  if(nextBtn) nextBtn.disabled = true;
+
+  // 이름 즉시 숨김 (transition 끊고 바로 opacity 0)
+  const nameEl = document.getElementById('lotteryName');
+  if(nameEl){
+    nameEl.style.transition = 'none';
+    nameEl.style.opacity = '0';
+    nameEl.textContent = currentName;
+  }
+
+  // 시리얼·진행바
+  const serialEl = document.getElementById('lotterySerial');
+  if(serialEl) serialEl.textContent = 'NO.' + String(currentRank).padStart(6,'0');
+  const fillEl = document.getElementById('progressFill');
+  if(fillEl) fillEl.style.width = '0%';
+
+  // 힌트 초기화
+  const h = document.getElementById('hintText');
+  if(h){ h.textContent = '✏️ 마우스 좌클릭을 누른 채 긁어보세요!'; h.style.animation = 'pulse 2s ease-in-out infinite'; h.style.color = ''; h.style.opacity = ''; }
+
+  // 등수 표시 — innerHTML 재작성이 span#remainCount 를 교체하므로 별도 접근 금지
+  const rankDisplay = document.getElementById('rankDisplay');
+  if(rankDisplay) rankDisplay.textContent = currentRank + '등';
+  const rankSub = document.getElementById('rankSub');
+  if(rankSub) rankSub.innerHTML =
+    usePass && currentRank <= passN
+      ? `합격자 선정 중 &nbsp;|&nbsp; 남은 참가자: <span id="remainCount">${pool.length+1}</span>명`
+      : `을 정하는 중입니다! &nbsp;|&nbsp; 남은 참가자: <span id="remainCount">${pool.length+1}</span>명`;
+
+  // 상품 라벨
+  const prizes = ['🥇 1등 당첨!','🥈 2등 당첨!','🥉 3등 당첨!','🎖️ 입상!'];
+  const prizeEl = document.getElementById('prizeLabel');
+  if(prizeEl) prizeEl.textContent = prizes[Math.min(currentRank-1, prizes.length-1)] ?? '🎟️ 당첨!';
+
+  genBarcode();
+
+  // rAF 두 번 = DOM 페인트 완료 후 캔버스 크기 정확히 측정 뒤 은박 애니메이션 시작
+  requestAnimationFrame(() => requestAnimationFrame(() => initScratch()));
+}
+
+/* ── 결과 패널 ── */
+function updateResultsPanel(){
+  const resultsTitle = document.getElementById('resultsTitle');
+  const resultsGrid = document.getElementById('resultsGrid');
+  if(!resultsTitle || !resultsGrid) return;
+  resultsTitle.style.display='block';
+  const last=results[results.length-1];
+  if(!last) return;
+  let cls='chip-normal', icon=`#${last.rank}`;
+  if(last.pass===true){cls='chip-pass';icon='✓';}
+  if(last.pass===false){cls='chip-fail';icon='✗';}
+  const chip=document.createElement('div');
+  chip.className=`result-chip ${cls}`;
+  chip.innerHTML=`<span class="chip-rank">${icon}</span>${last.name}`;
+  resultsGrid.appendChild(chip);
+}
+
+/* ── 완료 ── */
+function showFinish(){
+  const grid = document.getElementById('finishGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const finishSub = document.getElementById('finishSub');
+  if(usePass){
+    const passList = results.filter(r=>r.pass===true);
+    const failList = results.filter(r=>r.pass===false);
+    if(finishSub) finishSub.textContent = `합격 ${passList.length}명 / 탈락 ${failList.length}명`;
+    passList.forEach((r,i)=>{
+      const el=document.createElement('div');
+      el.className='finish-item finish-pass';
+      el.style.animationDelay=(i*.05)+'s';
+      el.innerHTML=`<div class="finish-rank-num">🥇 ${r.rank}등</div><div class="finish-name">✓ ${r.name}</div>`;
+      grid.appendChild(el);
+    });
+    failList.forEach((r,i)=>{
+      const el=document.createElement('div');
+      el.className='finish-item finish-fail';
+      el.style.animationDelay=((passList.length+i)*.05)+'s';
+      el.innerHTML=`<div class="finish-rank-num">탈락</div><div class="finish-name">✗ ${r.name}</div>`;
+      grid.appendChild(el);
+    });
+  } else {
+    if(finishSub) finishSub.textContent = `총 ${results.length}명 순위 결정 완료!`;
+    const medals = ['🥇','🥈','🥉'];
+    results.forEach((r,i)=>{
+      const el=document.createElement('div');
+      el.className='finish-item finish-normal';
+      el.style.animationDelay=(i*.05)+'s';
+      el.innerHTML=`<div class="finish-rank-num">${medals[r.rank-1]??'#'+r.rank}</div><div class="finish-name">${r.name}</div>`;
+      grid.appendChild(el);
+    });
+  }
+  document.getElementById('finishOverlay').classList.add('show');
+  spawnConfetti(80);
+}
+
+function restartGame(){
+  results=[];currentRank=1;pool=shuffle([...allNames]);
+  document.getElementById('finishOverlay').classList.remove('show');
+  document.getElementById('resultsGrid').innerHTML='';
+  document.getElementById('resultsTitle').style.display='none';
+  loadNextCard();
+}
+
+function spawnConfetti(count=40){
+  const cols=['#f5c518','#ff4d4d','#00e5ff','#ff9500','#c864ff','#6BCB77'];
+  for(let i=0;i<count;i++)setTimeout(()=>{
+    const el=document.createElement('div');el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';el.style.top='-20px';
+    el.style.background=cols[Math.floor(Math.random()*cols.length)];
+    el.style.animationDuration=(Math.random()*2+1.5)+'s';
+    document.body.appendChild(el);setTimeout(()=>el.remove(),4000);
+  },i*30);
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+loadNextCard();
+</script>
+</body>
+</html>

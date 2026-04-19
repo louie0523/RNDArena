@@ -156,6 +156,11 @@ textarea{resize:vertical;min-height:100px;}
 .gp-roulette::before{background:radial-gradient(ellipse at top,rgba(200,100,255,.08),transparent);}
 .gp-roulette:hover{border-color:#c864ff;box-shadow:0 0 28px rgba(200,100,255,.14);}
 
+.gp-lottery{border-color:rgba(255,180,0,.3);}
+.gp-lottery::before{background:radial-gradient(ellipse at top,rgba(255,180,0,.1),transparent);}
+.gp-lottery:hover{border-color:#ffb400;box-shadow:0 0 28px rgba(255,180,0,.18);}
+.badge-amber{background:rgba(255,180,0,.15);color:#ffb400;}
+
 .gp-icon{font-size:40px;line-height:1;}
 .gp-title{font-family:'Black Han Sans',sans-serif;font-size:20px;letter-spacing:2px;margin-top:4px;}
 .gp-desc{font-size:12px;color:var(--muted);line-height:1.6;flex:1;}
@@ -517,11 +522,18 @@ footer{
       <div class="gp-badge badge-gold">정정당당한 결투!</div>
     </div>
 
-    <div class="game-panel gp-roulette" onclick="go('roulette')" style="grid-column:span 2;">
+    <div class="game-panel gp-roulette" onclick="go('roulette')">
       <div class="gp-icon">🎡</div>
       <div class="gp-title" style="color:#c864ff">룰렛</div>
       <div class="gp-desc">화려한 룰렛 바퀴를 직접 돌려 한 명씩 뽑기! 스핀할수록 줄어드는 참가자!</div>
       <div class="gp-badge badge-purple">깔롱한 룰렛!</div>
+    </div>
+
+    <div class="game-panel gp-lottery" onclick="go('lottery')">
+      <div class="gp-icon">🎟️</div>
+      <div class="gp-title" style="color:#ffb400">복권</div>
+      <div class="gp-desc">황금빛 복권을 직접 긁어서 당첨자를 확인! 긁을수록 드러나는 이름으로 순위 결정!</div>
+      <div class="gp-badge badge-amber">무엇이 나올까요?</div>
     </div>
 
   </div>
