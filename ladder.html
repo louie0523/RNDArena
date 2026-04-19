@@ -30,8 +30,10 @@ header{
 .skip-btn-h:hover{background:rgba(249,115,22,.25);}
 .back-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all .2s;white-space:nowrap;}
 .back-btn:hover{border-color:var(--accent);color:var(--accent);}
-.game-area{flex:1;position:relative;overflow:hidden;z-index:5;}
-#ladderCanvas{display:block;width:100%;height:100%;}
+.game-area{flex:1;position:relative;overflow-x:auto;overflow-y:hidden;z-index:5;scrollbar-width:thin;scrollbar-color:rgba(56,189,248,0.3) transparent;}
+.game-area::-webkit-scrollbar{height:4px;}
+.game-area::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.3);border-radius:2px;}
+#ladderCanvas{display:block;height:100%;}
 .overlay{position:absolute;inset:0;background:rgba(4,8,15,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
 .ot{font-family:'Black Han Sans',sans-serif;font-size:27px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;}
 .os{font-size:13px;color:var(--muted);margin-bottom:26px;text-align:center;line-height:1.85;}
@@ -75,7 +77,7 @@ header{
   <div class="logo">📐 변칙 사다리</div>
   <div class="hdr-mid">
     <div class="speed-wrap">
-      🐢<input type="range" id="speedRange" min="3" max="8" value="4" oninput="updateSpeed(this.value)">🐇
+      🐢<input type="range" id="speedRange" min="1" max="6" value="2" oninput="updateSpeed(this.value)">🐇
       <span id="speedLabel">보통</span>
     </div>
     <button class="skip-btn-h" id="skipBtn" onclick="doSkip()" style="display:none">⏩ 스킵</button>
@@ -145,15 +147,21 @@ const sndFanfare=()=>{[523,659,784,880,1047,880,1047].forEach((f,i)=>setTimeout(
 // ══════════════════════════════════════
 // 속도
 // ══════════════════════════════════════
-let speedMult=4;
+let speedMult=1.8;
 let skipMode=false;
-const SL=['','','','보통','보통','빠르게','빠르게','매우빠름','매우빠름'];
-function updateSpeed(v){speedMult=parseInt(v);document.getElementById('speedLabel').textContent=SL[speedMult]||'보통';}
-updateSpeed(4);
+const SPEED_MAP=[0, 1, 1.8, 2.8, 4, 5.5, 8];
+const SPEED_LABEL=['','천천히','보통','빠르게','더빠르게','매우빠름','초고속'];
+function updateSpeed(v){
+  const vi=parseInt(v);
+  speedMult=SPEED_MAP[vi]||1.8;
+  document.getElementById('speedLabel').textContent=SPEED_LABEL[vi]||'보통';
+}
+updateSpeed(2);
+
 function doSkip(){
   skipMode=true;speedMult=20;
   document.getElementById('eventPopup').classList.remove('show');
-  document.getElementById('speedRange').value=8;
+  document.getElementById('speedRange').value=6;
   document.getElementById('speedLabel').textContent='스킵';
 }
 
@@ -163,7 +171,9 @@ function doSkip(){
 const canvas=document.getElementById('ladderCanvas');
 const ctx=canvas.getContext('2d');
 const gameArea=document.getElementById('gameArea');
-function resizeCanvas(){canvas.width=gameArea.clientWidth;canvas.height=gameArea.clientHeight;}
+function resizeCanvas(){
+  canvas.height=gameArea.clientHeight;
+}
 resizeCanvas();
 
 // ══════════════════════════════════════
@@ -175,23 +185,29 @@ let layout={};
 let bars=[];
 let teamSlots=[];
 let paths=[];
-let playerStates=[];   // 각 nameIdx 상태: null | {done,destCol,fullTrail} | {running} | {comeback_pending}
-let animStates={};     // nameIdx → animState (동시 여러 명)
+let playerStates=[];
+let animStates={};
 let comebackNameIdx=-1;
 let detourRows={};
 let comebackUsed=false;
 let gameStarted=false;
 let allDone=false;
-let doneCount=0;       // 완료된 인원 수
+let doneCount=0;
+
+const COL_SPACING = 120;
+const SIDE_PAD = 60;
 
 function buildLayout(){
-  const W=canvas.width,H=canvas.height;
-  const side=Math.max(26,W*0.05);
-  const colSpacing=N<=1?0:(W-side*2)/(N-1);
-  const cols=Array.from({length:N},(_,i)=>side+i*colSpacing);
-  const numRows=Math.max(14,Math.min(32,N*3));
+  const H=gameArea.clientHeight;
+  const needW = N<=1 ? gameArea.clientWidth : Math.max(gameArea.clientWidth, SIDE_PAD*2 + (N-1)*COL_SPACING);
+  const W = needW;
+  canvas.width = W;
+  canvas.height = H;
+  const colSpacing = N<=1 ? 0 : (W - SIDE_PAD*2) / (N-1);
+  const cols=Array.from({length:N},(_,i)=>SIDE_PAD+i*colSpacing);
+  const numRows=Math.max(22, Math.min(40, Math.round(40 - N * 1.5)));
   const rowSpacing=(H-TOP_PAD-BOT_PAD)/(numRows+1);
-  layout={W,H,side,colSpacing,cols,numRows,rowSpacing};
+  layout={W,H,side:SIDE_PAD,colSpacing,cols,numRows,rowSpacing};
 }
 
 function colX(c){return layout.cols[Math.max(0,Math.min(N-1,c))];}
@@ -205,12 +221,45 @@ function rowY(r){
 // 가로줄 생성
 // ══════════════════════════════════════
 function buildBars(){
-  const res=[],occ=new Set();
-  const den=Math.min(0.055,0.072-N*0.001);
-  for(let r=1;r<=layout.numRows;r++){
+  const res=[], occ=new Set();
+  const numRows=layout.numRows;
+  const den = N <= 3 ? 0.35 : N <= 6 ? 0.26 : 0.18;
+
+  const pairConsec = Array(N-1).fill(0);
+  for(let r=1;r<=numRows;r++){
     for(let c=0;c<N-1;c++){
       if(occ.has(`${r},${c}`)||occ.has(`${r},${c+1}`)||occ.has(`${r},${c-1}`))continue;
-      if(Math.random()<den){res.push({row:r,colL:c});occ.add(`${r},${c}`);occ.add(`${r},${c+1}`);}
+      if(pairConsec[c]>=2){pairConsec[c]=0;continue;}
+      if(Math.random()<den){
+        res.push({row:r,colL:c});
+        occ.add(`${r},${c}`);occ.add(`${r},${c+1}`);
+        pairConsec[c]++;
+      } else {
+        pairConsec[c]=0;
+      }
+    }
+  }
+
+  const MIN_PER_PAIR=4;
+  for(let c=0;c<N-1;c++){
+    const existing=res.filter(b=>b.colL===c);
+    let needed=MIN_PER_PAIR-existing.length;
+    if(needed<=0)continue;
+    const usedRows=new Set(existing.map(b=>b.row));
+    const candidates=[];
+    for(let r=1;r<=numRows;r++){
+      if(usedRows.has(r))continue;
+      if(occ.has(`${r},${c}`)||occ.has(`${r},${c+1}`)||occ.has(`${r},${c-1}`))continue;
+      const prev1=res.some(b=>b.colL===c&&b.row===r-1);
+      const prev2=res.some(b=>b.colL===c&&b.row===r-2);
+      if(prev1&&prev2)continue;
+      candidates.push(r);
+    }
+    shuffle(candidates);
+    for(let k=0;k<Math.min(needed,candidates.length);k++){
+      const r=candidates[k];
+      res.push({row:r,colL:c});
+      occ.add(`${r},${c}`);occ.add(`${r},${c+1}`);
     }
   }
   return res;
@@ -231,35 +280,65 @@ function buildTeamSlots(){
 }
 
 // ══════════════════════════════════════
-// 경로 계산
+// 경로 계산 — 직각 이동용 세그먼트 방식
+// 각 노드: { x, y, type }  (픽셀 좌표 직접 저장)
+// 가로줄 이동 = 먼저 수평(같은 y), 그 다음 수직(다음 행 y)
 // ══════════════════════════════════════
-function computePath(nameIdx,detourRow){
-  const numRows=layout.numRows;
-  const startCol=nameIdx;
-  const path=[{col:startCol,row:0,type:'start'}];
-  let col=startCol;
-  for(let r=1;r<=numRows;r++){
-    if(r===detourRow){
-      const dir=col<N-1?1:-1;
-      path.push({col:col+dir,row:r,type:'detour_go'});
-      path.push({col,row:r,type:'detour_back'});
+function computePath(nameIdx, detourRow){
+  const numRows = layout.numRows;
+  let col = nameIdx;
+  // 픽셀 좌표 기반 세그먼트 배열
+  const pts = [];
+
+  // 시작점
+  pts.push({ x: colX(col), y: rowY(0), type: 'start' });
+
+  for(let r = 1; r <= numRows; r++){
+    const curY = rowY(r);
+    const prevY = rowY(r - 1);
+
+    if(r === detourRow){
+      // 우회: 옆으로 갔다가 돌아옴 (모두 같은 y에서 수평 이동)
+      const dir = col < N-1 ? 1 : -1;
+      // 1) 현재 열 위에서 해당 행 y까지 수직
+      pts.push({ x: colX(col), y: curY, type: 'down' });
+      // 2) 옆 열로 수평 이동 (같은 y)
+      pts.push({ x: colX(col + dir), y: curY, type: 'detour_go' });
+      // 3) 다시 원래 열로 수평 복귀 (같은 y)
+      pts.push({ x: colX(col), y: curY, type: 'detour_back' });
       continue;
     }
-    const bR=bars.find(b=>b.row===r&&b.colL===col);
-    const bL=bars.find(b=>b.row===r&&b.colL===col-1);
-    if(bR){col++;path.push({col,row:r,type:'right'});}
-    else if(bL){col--;path.push({col,row:r,type:'left'});}
-    else path.push({col,row:r,type:'down'});
+
+    const bR = bars.find(b => b.row === r && b.colL === col);
+    const bL = bars.find(b => b.row === r && b.colL === col - 1);
+
+    if(bR){
+      // 1) 수직 이동: 이전 행 y → 현재 행 y (같은 열)
+      pts.push({ x: colX(col), y: curY, type: 'down' });
+      // 2) 수평 이동: 현재 행 y에서 오른쪽 열로
+      col++;
+      pts.push({ x: colX(col), y: curY, type: 'right' });
+    } else if(bL){
+      // 1) 수직
+      pts.push({ x: colX(col), y: curY, type: 'down' });
+      // 2) 수평
+      col--;
+      pts.push({ x: colX(col), y: curY, type: 'left' });
+    } else {
+      // 수직만
+      pts.push({ x: colX(col), y: curY, type: 'down' });
+    }
   }
-  path.push({col,row:numRows+1,type:'arrive'});
-  return path;
+
+  // 도착점
+  pts.push({ x: colX(col), y: rowY(numRows + 1), type: 'arrive' });
+  return pts;
 }
 
 // ══════════════════════════════════════
 // 전체 초기화
 // ══════════════════════════════════════
 function rebuildAll(){
-  resizeCanvas();
   buildLayout();
   bars=buildBars();
   teamSlots=buildTeamSlots();
@@ -272,11 +351,11 @@ function rebuildAll(){
   allDone=false;
 
   for(let i=0;i<N;i++){
-    if(Math.random()<0.15){
+    if(Math.random()<0.45){
       detourRows[i]=2+Math.floor(Math.random()*(layout.numRows-4));
     }
   }
-  if(N>2&&Math.random()<0.05){
+  if(N>=2){
     comebackNameIdx=Math.floor(Math.random()*(N-1));
   }
 
@@ -303,9 +382,7 @@ function ease(t){return t<0.5?2*t*t:-1+(4-2*t)*t;}
 function isClickable(i){
   if(!gameStarted||allDone)return false;
   const st=playerStates[i];
-  // 이미 완료됐거나 현재 달리는 중이면 불가
   if(st&&(st.done||st.running))return false;
-  // comeback_pending: 다시 클릭 가능
   return true;
 }
 
@@ -353,15 +430,16 @@ canvas.addEventListener('mousemove',e=>{
 // 플레이어 시작
 // ══════════════════════════════════════
 function launchPlayer(nameIdx){
-  if(animStates[nameIdx])return; // 이미 달리는 중
+  if(animStates[nameIdx])return;
   AC.resume();
   playerStates[nameIdx]={running:true};
+  const startPt = paths[nameIdx][0];
   animStates[nameIdx]={
     nameIdx,
-    step:0,
-    x:colX(nameIdx),
-    y:rowY(0),
-    trail:[{x:colX(nameIdx),y:rowY(0)}],
+    step:0,       // 현재 경유하고 있는 세그먼트 인덱스 (from=step, to=step+1)
+    x: startPt.x,
+    y: startPt.y,
+    fullPath:[{x: startPt.x, y: startPt.y}],
     segT:0,
   };
 }
@@ -369,96 +447,85 @@ function launchPlayer(nameIdx){
 // ══════════════════════════════════════
 // 정적 씬 그리기
 // ══════════════════════════════════════
-// hover 상태 추적 (draw에서 직접 처리)
 let hoverIdx=-1;
 
 function drawStatic(){
   const{W,H}=layout;
   ctx.clearRect(0,0,W,H);
-  const bW=Math.min(layout.colSpacing*0.88,76),bH=26;
+  const bW=Math.min(layout.colSpacing*0.78,72),bH=26;
 
-  // 완료 트레일
-  playerStates.forEach((st,pi)=>{
-    if(!st?.done||!st.fullTrail)return;
+  // ── 완료 트레일
+  playerStates.forEach((st)=>{
+    if(!st?.done||!st.fullTrail||st.fullTrail.length<2)return;
     const t=teams[teamSlots[st.destCol]];
     const rgb=t?hexRgb(t.color):'56,189,248';
-    const trail=st.fullTrail;
-    for(let i=1;i<trail.length;i++){
-      ctx.strokeStyle=`rgba(${rgb},${(i/trail.length)*0.32})`;
-      ctx.lineWidth=2;ctx.lineCap='round';
-      ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke();
-    }
-    // 도착 슬롯 표시
-    const dx=colX(st.destCol);
-    const t2=teams[teamSlots[st.destCol]];
-    if(t2){
-      ctx.fillStyle=`rgba(${hexRgb(t2.color)},0.25)`;
-      rrect(dx-bW/2,H-BOT_PAD+7,bW,bH,7);ctx.fill();
+    const fp=st.fullTrail;
+    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle=`rgba(${rgb},0.18)`;ctx.lineWidth=7;
+    ctx.beginPath();ctx.moveTo(fp[0].x,fp[0].y);
+    for(let i=1;i<fp.length;i++) ctx.lineTo(fp[i].x,fp[i].y);
+    ctx.stroke();
+    ctx.strokeStyle=`rgba(${rgb},0.75)`;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(fp[0].x,fp[0].y);
+    for(let i=1;i<fp.length;i++) ctx.lineTo(fp[i].x,fp[i].y);
+    ctx.stroke();
+    if(t){
+      const rgb2=hexRgb(t.color);
+      ctx.fillStyle=`rgba(${rgb2},0.22)`;
+      rrect(colX(st.destCol)-bW/2,H-BOT_PAD+7,bW,bH,7);ctx.fill();
     }
   });
 
-  // 세로 라인
+  // ── 세로 라인
   for(let c=0;c<N;c++){
     const x=colX(c);
     const isRunning=animStates[c]!==undefined;
-    const a=isRunning?0.65:0.18;
+    const a=isRunning?0.7:0.22;
     const grd=ctx.createLinearGradient(0,TOP_PAD,0,H-BOT_PAD);
-    grd.addColorStop(0,`rgba(56,189,248,${a*1.4})`);
+    grd.addColorStop(0,`rgba(56,189,248,${Math.min(1,a*1.5)})`);
     grd.addColorStop(0.5,`rgba(56,189,248,${a})`);
-    grd.addColorStop(1,`rgba(56,189,248,${a*0.4})`);
-    ctx.strokeStyle=grd;ctx.lineWidth=isRunning?2.5:1.5;
+    grd.addColorStop(1,`rgba(56,189,248,${a*0.5})`);
+    ctx.strokeStyle=grd;
+    ctx.lineWidth=isRunning?2.5:1.8;
+    ctx.lineCap='butt';
     ctx.beginPath();ctx.moveTo(x,TOP_PAD);ctx.lineTo(x,H-BOT_PAD);ctx.stroke();
   }
 
-  // 가로줄
+  // ── 가로줄
   bars.forEach(b=>{
     const y=rowY(b.row),x1=colX(b.colL),x2=colX(b.colL+1);
-    ctx.strokeStyle='rgba(56,189,248,0.3)';ctx.lineWidth=2;
+    ctx.strokeStyle='rgba(56,189,248,0.55)';
+    ctx.lineWidth=1.8;ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
-    [x1,x2].forEach(px=>{ctx.beginPath();ctx.arc(px,y,2.5,0,Math.PI*2);ctx.fillStyle='rgba(56,189,248,0.5)';ctx.fill();});
+    [x1,x2].forEach(px=>{
+      ctx.beginPath();ctx.arc(px,y,3,0,Math.PI*2);
+      ctx.fillStyle='rgba(56,189,248,0.7)';ctx.fill();
+    });
   });
 
-  // 상단 이름 박스
+  // ── 상단 이름 박스
   names.forEach((name,i)=>{
     const x=colX(i);
     const st=playerStates[i];
     const done=st?.done;
     const running=st?.running||animStates[i]!==undefined;
-    const comeback=st?.comeback_pending;
     const clickable=isClickable(i);
     const isHover=hoverIdx===i&&clickable;
-    const isComeback=i===comebackNameIdx&&!done;
 
-    // 박스 배경
-    if(done){
-      ctx.fillStyle='rgba(56,189,248,0.04)';
-    } else if(running){
-      ctx.fillStyle='rgba(56,189,248,0.22)';
-    } else if(isHover){
-      ctx.fillStyle='rgba(56,189,248,0.35)';
-    } else if(clickable){
-      // 클릭 가능 → 살짝 밝게 + 펄스 느낌
-      ctx.fillStyle='rgba(56,189,248,0.13)';
-    } else {
-      ctx.fillStyle='rgba(56,189,248,0.05)';
-    }
+    if(done) ctx.fillStyle='rgba(56,189,248,0.04)';
+    else if(running) ctx.fillStyle='rgba(56,189,248,0.22)';
+    else if(isHover) ctx.fillStyle='rgba(56,189,248,0.35)';
+    else if(clickable) ctx.fillStyle='rgba(56,189,248,0.13)';
+    else ctx.fillStyle='rgba(56,189,248,0.05)';
     rrect(x-bW/2,7,bW,bH,7);ctx.fill();
 
-    // 박스 테두리
-    if(done){
-      ctx.strokeStyle='rgba(56,189,248,0.1)';ctx.lineWidth=1;
-    } else if(running){
-      ctx.strokeStyle='rgba(56,189,248,0.9)';ctx.lineWidth=1.8;
-    } else if(isHover){
-      ctx.strokeStyle='rgba(56,189,248,1)';ctx.lineWidth=2;
-    } else if(clickable){
-      ctx.strokeStyle='rgba(56,189,248,0.55)';ctx.lineWidth=1.2;
-    } else {
-      ctx.strokeStyle='rgba(56,189,248,0.1)';ctx.lineWidth=1;
-    }
+    if(done){ctx.strokeStyle='rgba(56,189,248,0.1)';ctx.lineWidth=1;}
+    else if(running){ctx.strokeStyle='rgba(56,189,248,0.9)';ctx.lineWidth=1.8;}
+    else if(isHover){ctx.strokeStyle='rgba(56,189,248,1)';ctx.lineWidth=2;}
+    else if(clickable){ctx.strokeStyle='rgba(56,189,248,0.55)';ctx.lineWidth=1.2;}
+    else{ctx.strokeStyle='rgba(56,189,248,0.1)';ctx.lineWidth=1;}
     rrect(x-bW/2,7,bW,bH,7);ctx.stroke();
 
-    // 클릭 가능한 박스 아래 "▼ 클릭" 힌트 (아직 안한 경우)
     if(clickable&&!running&&!isHover&&gameStarted){
       ctx.fillStyle='rgba(56,189,248,0.35)';
       ctx.font=`9px "Noto Sans KR"`;
@@ -471,14 +538,13 @@ function drawStatic(){
     ctx.fillStyle=done?'rgba(180,210,255,0.28)':running||isHover?'#fff':'rgba(200,230,255,0.82)';
     ctx.textAlign='center';ctx.textBaseline='middle';
     let label=name;
-    const maxW=bW-(isComeback?22:10);
+    const maxW=bW-10;
     while(ctx.measureText(label).width>maxW&&label.length>1)label=label.slice(0,-1);
     if(label!==name)label+='…';
-    ctx.fillText(label,x-(isComeback?5:0),7+bH/2);
-    if(isComeback){ctx.font=`10px sans-serif`;ctx.textAlign='right';ctx.fillText('🙅',x+bW/2-2,7+bH/2);}
+    ctx.fillText(label,x,7+bH/2);
   });
 
-  // 하단 팀 슬롯
+  // ── 하단 팀 슬롯
   teamSlots.forEach((teamIdx,i)=>{
     const t=teams[teamIdx];if(!t)return;
     const x=colX(i),rgb=hexRgb(t.color);
@@ -506,7 +572,6 @@ function gameLoop(ts){
   const rawDt=Math.min(ts-lastTS,50);lastTS=ts;
   const dt=(rawDt/1000)*(skipMode?20:speedMult);
 
-  // 모든 활성 애니메이션 업데이트
   Object.keys(animStates).forEach(key=>{
     const ni=parseInt(key);
     updateAnim(ni,dt);
@@ -514,28 +579,44 @@ function gameLoop(ts){
 
   drawStatic();
 
-  // 모든 트레일 그리기
   Object.keys(animStates).forEach(key=>{
     drawTrail(animStates[parseInt(key)]);
   });
-  // 모든 도트 그리기
   Object.keys(animStates).forEach(key=>{
     drawDot(animStates[parseInt(key)]);
   });
 }
 
 function drawTrail(st){
-  if(!st||st.trail.length<2)return;
-  const pts=st.trail;
-  for(let i=1;i<pts.length;i++){
-    ctx.strokeStyle=`rgba(56,189,248,${(i/pts.length)*0.88})`;
-    ctx.lineWidth=3.5;ctx.lineCap='round';
-    ctx.beginPath();ctx.moveTo(pts[i-1].x,pts[i-1].y);ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke();
+  if(!st)return;
+  const fp=st.fullPath;
+  if(!fp||fp.length<2)return;
+
+  ctx.lineCap='round';ctx.lineJoin='round';
+
+  ctx.strokeStyle='rgba(56,189,248,0.18)';
+  ctx.lineWidth=7;
+  ctx.beginPath();
+  ctx.moveTo(fp[0].x,fp[0].y);
+  for(let i=1;i<fp.length;i++) ctx.lineTo(fp[i].x,fp[i].y);
+  ctx.stroke();
+
+  ctx.strokeStyle='rgba(56,189,248,0.9)';
+  ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(fp[0].x,fp[0].y);
+  for(let i=1;i<fp.length;i++) ctx.lineTo(fp[i].x,fp[i].y);
+  ctx.stroke();
+
+  const tail=fp.slice(-10);
+  if(tail.length>=2){
+    ctx.strokeStyle='rgba(180,240,255,0.7)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(tail[0].x,tail[0].y);
+    for(let i=1;i<tail.length;i++) ctx.lineTo(tail[i].x,tail[i].y);
+    ctx.stroke();
   }
-  const lp=pts[pts.length-1];
-  const grd=ctx.createRadialGradient(lp.x,lp.y,0,lp.x,lp.y,18);
-  grd.addColorStop(0,'rgba(56,189,248,0.45)');grd.addColorStop(1,'rgba(56,189,248,0)');
-  ctx.fillStyle=grd;ctx.beginPath();ctx.arc(lp.x,lp.y,18,0,Math.PI*2);ctx.fill();
 }
 
 function drawDot(st){
@@ -547,45 +628,67 @@ function drawDot(st){
   const label=name.length>5?name.slice(0,5)+'…':name;
   ctx.font=`bold 11px "Noto Sans KR"`;
   const tw=ctx.measureText(label).width+10;
-  ctx.fillStyle='rgba(4,8,15,0.82)';rrect(x-tw/2,y-30,tw,16,5);ctx.fill();
+  ctx.fillStyle='rgba(4,8,15,0.85)';rrect(x-tw/2,y-30,tw,16,5);ctx.fill();
   ctx.fillStyle='#38bdf8';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(label,x,y-22);
 }
 
 // ══════════════════════════════════════
-// 애니메이션 업데이트 (개별)
+// 애니메이션 업데이트 — 세그먼트 단위 직선 이동
+// paths[i]는 이미 직각 경유점이 모두 담긴 픽셀 배열
+// 각 세그먼트는 수직 또는 수평이므로 lerp 해도 직선 이동
 // ══════════════════════════════════════
-function updateAnim(nameIdx,dt){
-  const st=animStates[nameIdx];if(!st)return;
-  const path=paths[nameIdx];
-  if(!path||st.step>=path.length-1){arrivePlayer(nameIdx);return;}
-  const from=path[st.step],to=path[st.step+1];
-  const fx=colX(from.col),fy=rowY(from.row);
-  const tx=colX(to.col),ty=rowY(to.row);
-  const dist=Math.hypot(tx-fx,ty-fy)||1;
-  const spd=Math.max(80,dist*3);
-  st.segT+=dt*spd/dist;
-  if(st.segT>=1){
-    st.segT=0;st.step++;
-    st.x=tx;st.y=ty;
-    push(st,tx,ty);
-    const node=path[st.step];
+function updateAnim(nameIdx, dt){
+  const st = animStates[nameIdx];
+  if(!st) return;
+  const path = paths[nameIdx];
+  if(!path || st.step >= path.length - 1){
+    arrivePlayer(nameIdx);
+    return;
+  }
+
+  const from = path[st.step];
+  const to   = path[st.step + 1];
+
+  const dist = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+  // 수평 세그먼트는 수직보다 조금 빠르게 (가로줄 이동감)
+  const isHoriz = Math.abs(to.y - from.y) < 0.5;
+  const spd = isHoriz ? Math.max(80, dist * 4) : Math.max(80, dist * 3);
+
+  st.segT += dt * spd / dist;
+
+  if(st.segT >= 1){
+    st.segT = 0;
+    st.step++;
+    st.x = to.x;
+    st.y = to.y;
+    pushPt(st, to.x, to.y);
+
+    const node = path[st.step];
     if(node){
-      if(node.type==='right'||node.type==='left')sndTurn();
-      else if(node.type==='detour_go'){
+      if(node.type === 'right' || node.type === 'left') sndTurn();
+      else if(node.type === 'detour_go'){
         showEvt('🔀','우회 발생!',names[nameIdx],'잠깐 옆으로 샜다가 돌아옵니다…',skipMode?250:1000);
         sndEvent();
       }
-      else if(node.type==='arrive'){arrivePlayer(nameIdx);return;}
+      else if(node.type === 'arrive'){
+        arrivePlayer(nameIdx);
+        return;
+      }
     }
-  }else{
-    st.x=lerp(fx,tx,ease(st.segT));
-    st.y=lerp(fy,ty,ease(st.segT));
-    push(st,st.x,st.y);
-    if(Math.random()<0.05)sndStep();
+  } else {
+    st.x = lerp(from.x, to.x, ease(st.segT));
+    st.y = lerp(from.y, to.y, ease(st.segT));
+    pushPt(st, st.x, st.y);
+    if(Math.random() < 0.05) sndStep();
   }
 }
-function push(st,x,y){st.trail.push({x,y});if(st.trail.length>TRAIL_LEN)st.trail.shift();}
+
+function pushPt(st, x, y){
+  const fp = st.fullPath;
+  const last = fp[fp.length - 1];
+  if(!last || Math.hypot(x - last.x, y - last.y) > 0.5) fp.push({x, y});
+}
 
 // ══════════════════════════════════════
 // 이벤트 팝업
@@ -610,31 +713,33 @@ function arrivePlayer(nameIdx){
   if(!st)return;
 
   const path=paths[nameIdx];
-  const destCol=path[path.length-1].col;
+  const lastPt=path[path.length-1];
+  // destCol: 도착 x좌표에 가장 가까운 열 인덱스
+  let destCol=0;
+  let minDist=Infinity;
+  for(let c=0;c<N;c++){
+    const d=Math.abs(colX(c)-lastPt.x);
+    if(d<minDist){minDist=d;destCol=c;}
+  }
 
-  // comeback 이벤트: 최초 1회
   if(nameIdx===comebackNameIdx&&!comebackUsed){
     comebackUsed=true;
     showEvt('🙅','나 지금 안할래!',names[nameIdx],'다시 클릭해서 재시작하세요!',skipMode?400:2500);
     sndEvent();
-    // 상태: comeback_pending (다시 클릭 가능)
     delete animStates[nameIdx];
     playerStates[nameIdx]={comeback_pending:true};
-    // 경로 재계산 (comeback 없이)
     paths[nameIdx]=computePath(nameIdx,detourRows[nameIdx]??-1);
     return;
   }
 
-  // 정상 완료
   const teamIdx=teamSlots[destCol];
   if(teams[teamIdx])teams[teamIdx].members.push(names[nameIdx]);
-  const fullTrail=path.map(nd=>({x:colX(nd.col),y:rowY(nd.row)}));
+  const fullTrail=animStates[nameIdx]?.fullPath||path.map(nd=>({x:nd.x,y:nd.y}));
   delete animStates[nameIdx];
   playerStates[nameIdx]={done:true,destCol,fullTrail};
   sndArrive();
   doneCount++;
 
-  // 모두 완료됐는지 체크
   if(doneCount>=N){
     allDone=true;
     setTimeout(showFinalResult,skipMode?150:600);
@@ -681,7 +786,7 @@ function startGame(){
   requestAnimationFrame(ts=>{lastTS=ts;gameLoop(ts);});
 }
 
-// 마우스 위치 추적 (hover 효과)
+// 마우스 hover 추적
 canvas.addEventListener('mousemove',e=>{
   if(!gameStarted||allDone){hoverIdx=-1;return;}
   const rect=canvas.getBoundingClientRect();
@@ -703,7 +808,7 @@ canvas.addEventListener('mousemove',e=>{
 canvas.addEventListener('mouseleave',()=>{hoverIdx=-1;canvas.style.cursor='default';});
 
 // 초기 그리기
-resizeCanvas();buildLayout();bars=buildBars();teamSlots=buildTeamSlots();drawStatic();
+buildLayout();bars=buildBars();teamSlots=buildTeamSlots();drawStatic();
 </script>
 </body>
 </html>
