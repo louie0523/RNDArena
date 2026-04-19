@@ -276,6 +276,144 @@ header{
 </div>
 
 <script>
+/* ══════════════════════════════
+   🔊 사운드 시스템 (Web Audio API, 외부 파일 없음)
+══════════════════════════════ */
+let _ac = null;
+function getAC(){
+  if(!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
+  if(_ac.state === 'suspended') _ac.resume();
+  return _ac;
+}
+
+// 긁기 소리 — 화이트노이즈 짧게 + 필터
+let _scratchLastTime = 0;
+function sndScratch(){
+  const now = Date.now();
+  if(now - _scratchLastTime < 30) return; // 너무 잦은 호출 throttle
+  _scratchLastTime = now;
+  const ac = getAC();
+  const t  = ac.currentTime;
+  const bufSize = ac.sampleRate * 0.06;
+  const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i = 0; i < bufSize; i++) data[i] = (Math.random()*2-1);
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const filter = ac.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 2200 + Math.random()*600;
+  filter.Q.value = 0.8;
+  const gain = ac.createGain();
+  gain.gain.setValueAtTime(0.18, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  src.connect(filter); filter.connect(gain); gain.connect(ac.destination);
+  src.start(t); src.stop(t + 0.06);
+}
+
+// 결과 공개 소리 — 두둥 드럼롤 → 짧은 팡파레
+function sndReveal(rank){
+  const ac = getAC();
+  const t  = ac.currentTime;
+
+  // 드럼롤 (노이즈 버스트 3개)
+  [0, 0.07, 0.13].forEach(dt => {
+    const bufSize = ac.sampleRate * 0.05;
+    const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<bufSize;i++) d[i]=(Math.random()*2-1);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const filter = ac.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=180;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.5, t+dt);
+    g.gain.exponentialRampToValueAtTime(0.001, t+dt+0.05);
+    src.connect(filter); filter.connect(g); g.connect(ac.destination);
+    src.start(t+dt); src.stop(t+dt+0.05);
+  });
+
+  // 팡파레 멜로디 (등수별로 다름)
+  const melodies = {
+    1: [[523,0.2],[659,0.2],[784,0.2],[1047,0.4]],   // C E G C — 1등 화려하게
+    2: [[523,0.2],[659,0.2],[784,0.35]],               // C E G
+    3: [[523,0.2],[659,0.35]],                          // C E
+  };
+  const notes = melodies[rank] || [[523,0.2],[587,0.25]]; // 기본
+  let offset = 0.2;
+  notes.forEach(([freq, dur]) => {
+    const osc  = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t+offset);
+    gain.gain.setValueAtTime(0, t+offset);
+    gain.gain.linearRampToValueAtTime(0.3, t+offset+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+offset+dur);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.start(t+offset); osc.stop(t+offset+dur+0.05);
+    offset += dur * 0.85;
+  });
+}
+
+// 은박 등장 소리 — 스윽 슬라이드 인
+function sndFoilIn(){
+  const ac = getAC();
+  const t  = ac.currentTime;
+  const dur = 0.4;
+  const bufSize = Math.floor(ac.sampleRate * dur);
+  const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<bufSize;i++) d[i]=(Math.random()*2-1)*0.6;
+  const src = ac.createBufferSource(); src.buffer = buf;
+  const filter = ac.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.setValueAtTime(3000, t);
+  filter.frequency.exponentialRampToValueAtTime(800, t+dur);
+  const gain = ac.createGain();
+  gain.gain.setValueAtTime(0.001, t);
+  gain.gain.linearRampToValueAtTime(0.12, t+0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+dur);
+  src.connect(filter); filter.connect(gain); gain.connect(ac.destination);
+  src.start(t); src.stop(t+dur+0.05);
+}
+
+// 다음 카드 전환 소리 — 짧은 틱
+function sndNext(){
+  const ac = getAC();
+  const t  = ac.currentTime;
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(880, t);
+  osc.frequency.exponentialRampToValueAtTime(440, t+0.1);
+  gain.gain.setValueAtTime(0.15, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.start(t); osc.stop(t+0.12);
+}
+
+// 전체 완료 소리 — 승리 팡파레
+function sndFinish(){
+  const ac = getAC();
+  const t  = ac.currentTime;
+  const melody = [
+    [523,0.15],[523,0.15],[523,0.15],[659,0.4],
+    [587,0.15],[587,0.15],[587,0.15],[784,0.5],
+  ];
+  let off = 0;
+  melody.forEach(([freq, dur])=>{
+    ['sine','triangle'].forEach(type => {
+      const osc = ac.createOscillator();
+      const g   = ac.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, t+off);
+      g.gain.linearRampToValueAtTime(type==='sine'?0.22:0.08, t+off+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t+off+dur*0.9);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(t+off); osc.stop(t+off+dur);
+    });
+    off += dur * 0.9;
+  });
+}
 /* ── 파라미터 ── */
 const params   = new URLSearchParams(location.search);
 const allNames = params.get('names')
@@ -391,6 +529,7 @@ function initScratch(){
   // ── 슬라이드 인 애니메이션 ──
   const ANIM_MS = 420;
   const t0 = performance.now();
+  sndFoilIn();
 
   function drawFrame(now){
     const p    = Math.min((now - t0) / ANIM_MS, 1);
@@ -511,6 +650,7 @@ function doScratch(e){
     eraseCircle(ctx,  ox, oy, sr);
     eraseCircle(dctx, ox, oy, sr);
   }
+  sndScratch();
   checkPct(cv, ctx);
 }
 
@@ -546,6 +686,7 @@ function revealCard(){
 
   document.getElementById('lotteryCard').classList.add('revealed');
   if(currentRank <= 3) spawnConfetti();
+  sndReveal(currentRank);
 
   // 두 캔버스 동시 페이드아웃 (step 8회)
   let step = 0;
@@ -579,6 +720,7 @@ let isTransitioning = false;
 function nextLottery(){
   if(!isRevealed || isTransitioning) return;
   isTransitioning = true;
+  sndNext();
 
   // 버튼·카드 즉시 잠금
   document.getElementById('nextBtn').disabled = true;
@@ -725,6 +867,7 @@ function showFinish(){
   }
   document.getElementById('finishOverlay').classList.add('show');
   spawnConfetti(80);
+  sndFinish();
 }
 
 function restartGame(){
